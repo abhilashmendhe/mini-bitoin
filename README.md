@@ -26,4 +26,5 @@ This project is focused on deeply understanding how Bitcoin works under the hood
 This project follows a build-to-understand philosophy:
 
 1. Start with math (finite fields, ECC)
+    - Refer [Basic Number Theory - 1](https://www.hackerearth.com/practice/math/number-theory/basic-number-theory-1/tutorial/) to understand more about modular arithmetic theory. 
 2. (Will Update)
