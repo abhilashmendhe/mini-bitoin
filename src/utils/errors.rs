@@ -7,4 +7,7 @@ pub enum BTCErr {
         num:   isize,
         prime: isize
     },
+
+    #[error("Finite fields have different primes. Cant perform {}", .0)]
+    TwoDiffFiniteFields(String),
 }
