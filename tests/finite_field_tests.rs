@@ -68,11 +68,33 @@ fn mul_finite_field() -> Result<(), BTCErr> {
 fn exp_finite_field() -> Result<(), BTCErr> {
     let f1 = FieldElement::new(2, 5)?;
     let f2 = FieldElement::new(4, 5)?;
-    assert!(f1.pow_modulo(10) == f2);
+    assert!(f1.pow_modulo(10)? == f2);
 
     let f3 = FieldElement::new(3, 23)?;
     let f4 = FieldElement::new(2, 23)?;
-    assert!(f3.pow_modulo(29) == f4);
+    assert!(f3.pow_modulo(29)? == f4);
+    Ok(())
+}
 
+
+#[test]
+fn div_finite_field() -> Result<(), BTCErr> {
+    let f1 = FieldElement::new(2, 19)?;
+    let f2 = FieldElement::new(7, 19)?;
+    let f3 = FieldElement::new(3, 19)?;
+    assert!((f1/f2)? == f3);
+
+    let f1 = FieldElement::new(7, 19)?;
+    let f2 = FieldElement::new(5, 19)?;
+    let f3 = FieldElement::new(9, 19)?;
+    assert!((f1/f2)? == f3);
+    Ok(())
+}
+
+#[test]
+fn neg_exp_finite_field() -> Result<(), BTCErr> {
+    let f1 = FieldElement::new(7, 13)?;
+    let f2 = FieldElement::new(8, 13)?;
+    assert!(f1.pow_modulo(-3)? == f2);    
     Ok(())
 }
