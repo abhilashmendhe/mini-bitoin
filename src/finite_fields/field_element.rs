@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 
 use crate::{finite_fields::modulo_helper::modulo, utils::errors::BTCErr};
 
@@ -87,9 +87,34 @@ impl Mul for FieldElement {
         if self.prime != rhs.prime {
             return Err(BTCErr::TwoDiffFiniteFields("Multiplication".to_string()));
         }
-        
         let num = modulo(modulo(self.num, self.prime) * modulo(rhs.num, rhs.prime), self.prime); 
-
         Ok(FieldElement { num, prime: self.prime })
+    }
+}
+
+/*
+    For division, we know that a/b. It can transform to the inverse multiplication i.e; a*b^-1.
+    Since we are taking modulo over the div result, we will use Fermat theorem.
+    The theorem says that:
+                n^(p-1) % p= 1
+    Because div is inverse multiplication, we can reduce to multiplication problem.
+                a / b = a * b^-1
+    From fermat theorem,
+                b ^ (p-1) = 1 
+    Multiply above equation by b^-1 gives,
+                b^-1 = b^(p-2)
+    For e.g. F19 (p=19) is b^-1 = b^17
+    Now we compute the modulo exponential value of b^17
+    The final answer of above modulo exponetial value is equal to b^-1
+*/
+impl Div for FieldElement {
+    type Output = Result<FieldElement, BTCErr>;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        if self.prime != rhs.prime {
+            return Err(BTCErr::TwoDiffFiniteFields("Division".to_string()));
+        }
+        let rhs_mul_inv = rhs.pow_modulo(rhs.prime - 2);
+        self * rhs_mul_inv
     }
 }
