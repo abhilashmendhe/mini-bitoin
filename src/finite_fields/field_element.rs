@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub};
+use std::ops::{Add, Mul, Sub};
 
 use crate::{finite_fields::modulo_helper::modulo, utils::errors::BTCErr};
 
@@ -18,6 +18,22 @@ impl FieldElement {
             num,
             prime, 
         })
+    }
+
+    pub fn pow_modulo(&self, n: isize) -> FieldElement {
+        
+        let mut result = 1;
+        let mut x = self.num;
+        let mut n = n;
+        let m = self.prime;
+        while n > 0 {
+            if n % 2 == 1 {
+                result = ((result % m) * (x % m)) % m;
+            }
+            x = ((x % m) * (x % m)) % m;
+            n /= 2;
+        }
+        FieldElement { num: result, prime: self.prime }
     }
 }
 
@@ -61,5 +77,19 @@ impl Sub for FieldElement {
                 prime: self.prime
             }
         )
+    }
+}
+
+impl Mul for FieldElement {
+    type Output = Result<FieldElement, BTCErr>;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        if self.prime != rhs.prime {
+            return Err(BTCErr::TwoDiffFiniteFields("Multiplication".to_string()));
+        }
+        
+        let num = modulo(modulo(self.num, self.prime) * modulo(rhs.num, rhs.prime), self.prime); 
+
+        Ok(FieldElement { num, prime: self.prime })
     }
 }
