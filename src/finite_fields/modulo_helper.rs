@@ -1,3 +1,3 @@
-pub fn modulo(num: isize, M: isize) -> isize {
-    ((num % M) + M) % M
+pub fn modulo(num: isize, m: isize) -> isize {
+    ((num % m) + m) % m
 }
