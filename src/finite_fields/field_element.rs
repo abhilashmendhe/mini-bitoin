@@ -20,8 +20,14 @@ impl FieldElement {
         })
     }
 
-    pub fn pow_modulo(&self, n: isize) -> FieldElement {
+    pub fn pow_modulo(&self, n: isize) -> Result<FieldElement, BTCErr> {
         
+        if n < 0 {
+            let f1 = FieldElement::new(1, self.prime)?;
+            let f2 = FieldElement::new(self.num, self.prime)?.pow_modulo(-1*n)?;
+            return f1 / f2;
+        }
+
         let mut result = 1;
         let mut x = self.num;
         let mut n = n;
@@ -33,7 +39,7 @@ impl FieldElement {
             x = ((x % m) * (x % m)) % m;
             n /= 2;
         }
-        FieldElement { num: result, prime: self.prime }
+        Ok(FieldElement { num: result, prime: self.prime })
     }
 }
 
@@ -107,6 +113,7 @@ impl Mul for FieldElement {
     Now we compute the modulo exponential value of b^17
     The final answer of above modulo exponetial value is equal to b^-1
 */
+
 impl Div for FieldElement {
     type Output = Result<FieldElement, BTCErr>;
 
@@ -114,7 +121,7 @@ impl Div for FieldElement {
         if self.prime != rhs.prime {
             return Err(BTCErr::TwoDiffFiniteFields("Division".to_string()));
         }
-        let rhs_mul_inv = rhs.pow_modulo(rhs.prime - 2);
+        let rhs_mul_inv = rhs.pow_modulo(rhs.prime - 2)?;
         self * rhs_mul_inv
     }
 }
