@@ -17,6 +17,7 @@ pub trait CurveField:
     fn checked_sub(self, rhs: Self) -> Result<Self, BTCErr>;
     fn checked_mul(self, rhs: Self) -> Result<Self, BTCErr>;
     fn checked_div(self, rhs: Self) -> Result<Self, BTCErr>;
+    fn zero(&self) -> Self;
 }
 
 impl CurveField for FieldElement {
@@ -36,6 +37,9 @@ impl CurveField for FieldElement {
         self.checked_div(rhs)
     }
     
+    fn zero(&self) -> Self {
+        FieldElement { num: 0, prime: self.prime }
+    }
 }
 impl CurveField for isize {
     fn checked_mul(self, rhs: Self) -> Result<Self, BTCErr> {
@@ -53,5 +57,10 @@ impl CurveField for isize {
     fn checked_div(self, rhs: Self) -> Result<Self, BTCErr> {
         Ok(self / rhs)
     }
+    
+    fn zero(&self) -> Self {
+        0
+    }
+    
     
 }
