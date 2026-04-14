@@ -10,4 +10,7 @@ pub enum BTCErr {
 
     #[error("Finite fields have different primes. Cant perform {}", .0)]
     TwoDiffFiniteFields(String),
+
+    #[error("{}", .0)]
+    PointNotOnECC(String),
 }
