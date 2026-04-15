@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use crate::{elliptic_curve::curve_field::CurveField, finite_fields::field_element::FieldElement, utils::errors::BTCErr};
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Point<T> {
     Infinite,
     Finite {
@@ -34,8 +34,21 @@ impl<T> Point<T>
     pub fn inifinity() -> Self {
         Point::Infinite
     }
-    pub fn checked_add(self, rhs: Point<T>) {
-        
+    pub fn checked_add(self, rhs: Point<T>) -> Result<Self, BTCErr> {
+        match (&self, &rhs) {
+            (Point::Infinite, _) => Ok(rhs),
+            (_, Point::Infinite) => Ok(self),
+            (
+                Point::Finite { x: _, y: _, a: a1, b: b1 }, 
+                Point::Finite { x: _, y: _, a: a2, b: b2 }) => {
+                
+                if a1 != a2 || b1 != b2 {
+                    return Err(BTCErr::PointNotOnSameECC(format!("Points {}, {} are not on the same curve", a1, b1)));
+                }
+
+                Ok(self + rhs)
+            },
+        }
     }
 }
 
