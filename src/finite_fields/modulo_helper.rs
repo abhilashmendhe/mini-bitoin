@@ -1,3 +1,5 @@
-pub fn modulo(num: isize, m: isize) -> isize {
-    ((num % m) + m) % m
+use num_bigint::BigInt;
+
+pub fn modulo(num: BigInt, m: BigInt) -> BigInt {
+    ((num % m.clone()) + m.clone()) % m.clone()
 }

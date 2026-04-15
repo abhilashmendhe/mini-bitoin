@@ -1,5 +1,7 @@
 use std::ops::Add;
 
+use num_bigint::BigInt;
+
 use crate::{elliptic_curve::curve_field::CurveField, finite_fields::field_element::FieldElement, utils::errors::BTCErr};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -18,15 +20,15 @@ impl<T> Point<T>
         T: CurveField
 {
     pub fn new(x: T, y: T, a: T, b: T) -> Self {
-        assert!((y*y) == (x*x*x)+(a*x)+b);
+        assert!((y.clone()*y.clone()) == (x.clone()*x.clone()*x.clone())+(a.clone()*x.clone())+b.clone());
         Point::Finite { x, y, a, b }
     }
     pub fn try_new(x: T, y: T, a: T, b: T) -> Result<Self, BTCErr> {
-        let checked_y_square = (y.checked_mul(y))?;
-        let checked_x_cube   = ((x.checked_mul(x)?).checked_mul(x))?;
-        let checked_a_x_mul  = a.checked_mul(x)?;
+        let checked_y_square = (y.clone().checked_mul(y.clone()))?;
+        let checked_x_cube   = ((x.clone().checked_mul(x.clone())?).checked_mul(x.clone()))?;
+        let checked_a_x_mul  = a.clone().checked_mul(x.clone())?;
 
-        if checked_y_square != (checked_x_cube.checked_add(checked_a_x_mul)?).checked_add(b)? {
+        if checked_y_square != (checked_x_cube.checked_add(checked_a_x_mul)?).checked_add(b.clone())? {
             return Err(BTCErr::PointNotOnECC(format!("({}, {}) is not on the curve", x, y)))
         }
         Ok(Point::Finite { x, y, a, b })
@@ -52,7 +54,7 @@ impl<T> Point<T>
     }
 }
 
-impl std::fmt::Display for Point<isize> {
+impl std::fmt::Display for Point<BigInt> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Point::Infinite => write!(f, "Point(infinity)"),
@@ -98,22 +100,22 @@ impl<T: CurveField> Add for Point<T> {
                 if x1 == x2 && y1 != y2 {
                     return Point::inifinity();
                 } else if x1 != x2 {
-                    let slope = (*y2 - *y1) / (*x2 - *x1);
-                    let x3 = (slope * slope) - *x1 - *x2;
-                    let y3 = slope * (*x1 - x3) - *y1;
-                    return Point::Finite { x: x3, y: y3, a: *a1, b: *b1 };
+                    let slope = ((*y2).clone() - (*y1).clone()) / ((*x2).clone() - (*x1).clone());
+                    let x3 = (slope.clone() * slope.clone()) - (*x1).clone() - (*x2).clone();
+                    let y3 = slope * ((*x1).clone() - x3.clone()) - (*y1).clone();
+                    return Point::Finite { x: x3, y: y3, a: (*a1).clone(), b: (*b1).clone() };
                 }
                
                 if self == rhs && *y1 == y1.zero() {
                     return Point::Infinite;
                 }
-                let x1_2 = (*x1) * (*x1);
-                let x1_2_3 = x1_2 + x1_2 + x1_2;
-                let y1_1_2 = *y1 + *y1;
-                let slope = (x1_2_3 + *a1) / y1_1_2;
-                let x3 = (slope * slope) - *x1 - *x1;
-                let y3 = slope * (*x1 - x3) - *y1;
-                return Point::Finite { x: x3, y: y3, a: *a1, b: *b1 };
+                let x1_2 = (*x1).clone() * (*x1).clone();
+                let x1_2_3 = x1_2.clone() + x1_2.clone() + x1_2.clone();
+                let y1_1_2 = (*y1).clone() + (*y1).clone();
+                let slope = (x1_2_3 + (*a1).clone()) / y1_1_2;
+                let x3 = (slope.clone() * slope.clone()) - (*x1).clone() - (*x1).clone();
+                let y3 = slope * ((*x1).clone() - x3.clone()) - (*y1).clone();
+                return Point::Finite { x: x3, y: y3, a: (*a1).clone(), b: (*b1).clone() };
             }
         }
     }

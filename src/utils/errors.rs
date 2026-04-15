@@ -1,11 +1,12 @@
+use num_bigint::BigInt;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum BTCErr {
     #[error("Number {} is not in the field range 0 to {}", .num, .prime)]
     FiniteFieldRangeErr {
-        num:   isize,
-        prime: isize
+        num:   BigInt,
+        prime: BigInt
     },
 
     #[error("Finite fields have different primes. Cant perform {}", .0)]

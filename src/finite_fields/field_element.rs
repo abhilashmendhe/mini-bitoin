@@ -1,27 +1,26 @@
 use std::ops::{Add, Div, Mul, Sub};
 
+use num_bigint::BigInt;
+
 use crate::{finite_fields::modulo_helper::modulo, utils::errors::BTCErr};
 
-#[derive(PartialEq, PartialOrd, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Clone)]
 pub struct FieldElement {
-    pub num: isize,
-    pub prime: isize
+    pub num: BigInt,
+    pub prime: BigInt
 }
 
 impl FieldElement {
 
-    pub fn new(num: isize, prime: isize) -> Self {
-        assert!(prime > 1);
-        assert!(num < prime || num >= 0);
-        Self {
-            num,
-            prime, 
-        }
+    pub fn new(num: BigInt, prime: BigInt) -> Self {
+        assert!(prime > BigInt::parse_bytes(b"1", 16).unwrap());
+        assert!(num < prime || num >= BigInt::parse_bytes(b"0", 16).unwrap());
+        Self { num, prime }
     }
 
-    pub fn try_new(num: isize, prime: isize) -> Result<FieldElement, BTCErr> {
+    pub fn try_new(num: BigInt, prime: BigInt) -> Result<FieldElement, BTCErr> {
 
-        if num >= prime || num < 0{
+        if num >= prime || num < BigInt::parse_bytes(b"0", 16).unwrap() {
             return Err(BTCErr::FiniteFieldRangeErr { num, prime })
         }
         Ok(Self {
@@ -58,26 +57,26 @@ impl FieldElement {
         Ok(self / rhs)
     }
 
-    pub fn pow_modulo(&self, n: isize) -> FieldElement {
+    pub fn pow_modulo(&self, n: BigInt) -> FieldElement {
         
-        if n < 0 {
-            let f1 = FieldElement::new(1, self.prime);
-            let f2 = FieldElement::new(self.num, self.prime).pow_modulo(-1*n);
+        if n < BigInt::parse_bytes(b"0", 16).unwrap() {
+            let f1 = FieldElement::new(BigInt::parse_bytes(b"1", 16).unwrap(), self.prime.clone());
+            let f2 = FieldElement::new(self.num.clone(), self.prime.clone()).pow_modulo(BigInt::parse_bytes(b"-1", 16).unwrap()*n);
             return f1 / f2;
         }
 
-        let mut result = 1;
-        let mut x = self.num;
+        let mut result = BigInt::parse_bytes(b"1", 16).unwrap();
+        let mut x = self.num.clone();
         let mut n = n;
-        let m = self.prime;
-        while n > 0 {
-            if n % 2 == 1 {
-                result = ((result % m) * (x % m)) % m;
+        let m = self.prime.clone();
+        while n.clone() > BigInt::parse_bytes(b"0", 16).unwrap() {
+            if n.clone() % BigInt::parse_bytes(b"2", 16).unwrap() == BigInt::parse_bytes(b"1", 16).unwrap() {
+                result = ((result % m.clone()) * (x.clone() % m.clone())) % m.clone();
             }
-            x = ((x % m) * (x % m)) % m;
+            x = ((x.clone() % m.clone()) * (x.clone() % m.clone())) % m.clone();
             n /= 2;
         }
-        FieldElement { num: result, prime: self.prime }
+        FieldElement { num: result, prime: self.prime.clone() }
     }
 
     // pub fn checked_pow_modulo(self)
@@ -93,7 +92,7 @@ impl Add for FieldElement {
     type Output = FieldElement;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let num = modulo(modulo(self.num, self.prime) + modulo(rhs.num, rhs.prime), self.prime);    
+        let num = modulo(modulo(self.num.clone(), self.prime.clone()) + modulo(rhs.num.clone(), rhs.prime.clone()), self.prime.clone());    
         FieldElement { 
             num,
             prime: self.prime
@@ -106,8 +105,8 @@ impl Sub for FieldElement {
 
     fn sub(self, rhs: Self) -> Self::Output {
         let num = modulo(
-            modulo(self.num, self.prime) - modulo(rhs.num, rhs.prime) + self.prime, 
-            self.prime
+            modulo(self.num, self.prime.clone()) - modulo(rhs.num, rhs.prime) + self.prime.clone(), 
+            self.prime.clone()
         );     
         FieldElement { 
             num,
@@ -120,7 +119,7 @@ impl Mul for FieldElement {
     type Output = FieldElement;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        let num = modulo(modulo(self.num, self.prime) * modulo(rhs.num, rhs.prime), self.prime); 
+        let num = modulo(modulo(self.num, self.prime.clone()) * modulo(rhs.num, rhs.prime), self.prime.clone()); 
         FieldElement { num, prime: self.prime }
     }
 }
@@ -145,7 +144,7 @@ impl Div for FieldElement {
     type Output = FieldElement;
 
     fn div(self, rhs: Self) -> Self::Output {
-        let rhs_mul_inv = rhs.pow_modulo(rhs.prime - 2);
+        let rhs_mul_inv = rhs.pow_modulo(rhs.prime.clone() - 2);
         self * rhs_mul_inv
     }
 }
