@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
+once_cell = "1.21.4"
 thiserror = "2.0.18"
