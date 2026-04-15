@@ -106,3 +106,18 @@ fn point_add_field_elem_test() {
     println!("p1 + p2 = {}", p1.clone() + p2.clone());
     assert_eq!(p1 + p2, p3);
 }
+
+#[test]
+fn point_scalar_mul_test() {
+    let prime: BigInt = 223.into();
+    let a = FieldElement::new(0.into(), prime.clone());
+    let b = FieldElement::new(7.into(), prime.clone());
+    let x = FieldElement::new(47.into(), prime.clone());
+    let y = FieldElement::new(71.into(), prime.clone());
+    let p = Point::new(x, y, a, b);
+
+    for i in 1..=21 {
+        println!("{} * {} = {}", p.clone(), i, p.clone()*(i.into()));
+    }
+    assert_eq!(p.clone() * 21.into(), Point::Infinite);
+}

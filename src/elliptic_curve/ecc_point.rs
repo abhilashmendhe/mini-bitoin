@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::ops::{Add, Mul};
 
 use num_bigint::BigInt;
 
@@ -51,6 +51,21 @@ impl<T> Point<T>
                 Ok(self + rhs)
             },
         }
+    }
+    pub fn rmul(self, coeff: BigInt) -> Self {
+        let mut coeff = coeff;
+        let mut current = self.clone();
+        let mut result = Point::Infinite::<T>;
+
+        let one: BigInt = 1.into();
+        while coeff > 0.into() {
+            if (coeff.clone() & one.clone()) == one {
+                result = result + current.clone();
+            }
+            current = current.clone() + current;
+            coeff >>= 1;
+        }
+        result
     }
 }
 
@@ -118,5 +133,15 @@ impl<T: CurveField> Add for Point<T> {
                 return Point::Finite { x: x3, y: y3, a: (*a1).clone(), b: (*b1).clone() };
             }
         }
+    }
+}
+
+impl<T> Mul<BigInt> for Point<T> 
+    where 
+        T: CurveField
+{
+    type Output = Self;
+    fn mul(self, rhs: BigInt) -> Self::Output {
+        self.rmul(rhs)
     }
 }
