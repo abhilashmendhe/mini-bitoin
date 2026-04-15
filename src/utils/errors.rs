@@ -13,4 +13,7 @@ pub enum BTCErr {
 
     #[error("{}", .0)]
     PointNotOnECC(String),
+
+    #[error("{}", .0)]
+    PointNotOnSameECC(String),
 }
