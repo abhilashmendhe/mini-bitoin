@@ -24,6 +24,12 @@ impl S256Field {
         let inner = FieldElement::new(num, new_prime);
         S256Field { inner }
     }
+    pub fn sqrt(self) -> FieldElement {
+        let p = P;
+        let power = ((*p).clone() + 1) / 4;
+        let inner = self.inner;
+        inner.pow_modulo(power)
+    }
 }
 
 impl std::fmt::Display for S256Field {
