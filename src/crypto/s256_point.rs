@@ -3,13 +3,21 @@ use std::ops::{Add, Mul};
 use num_bigint::BigInt;
 use once_cell::sync::Lazy;
 
-use crate::{crypto::s256_field::S256Field, elliptic_curve::{curve_field::CurveField, ecc_point::Point}, finite_fields::modulo_helper::modulo};
+use crate::{crypto::{s256_field::S256Field, signature::Signature}, elliptic_curve::{curve_field::CurveField, ecc_point::Point}, finite_fields::modulo_helper::{modulo, pow_modulo}};
 
 pub const N: Lazy<BigInt> = Lazy::new(|| {
     BigInt::parse_bytes(b"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16).unwrap()
 });
 
-#[derive(Debug)]
+pub const G: Lazy<S256Point> = Lazy::new(|| {
+    let gx = BigInt::parse_bytes(b"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", 16).unwrap();
+    let gy = BigInt::parse_bytes(b"483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8", 16).unwrap();
+    let gx = S256Field::new(gx, None);
+    let gy = S256Field::new(gy, None);
+    S256Point::new(gx, gy, None,None)
+});
+
+#[derive(Debug, Clone)]
 pub struct S256Point {
     pub inner: Point<S256Field>,
 }
@@ -26,6 +34,19 @@ impl S256Point {
         let coeff = modulo(coeff, (*N).clone());
         S256Point { inner: self.inner.rmul(coeff) }
     }
+
+    pub fn verify(self, z: BigInt, sig: Signature, generator: S256Point) -> bool {
+        let n = N;
+        let s_inv = pow_modulo(sig.s.clone(), (*n).clone() - 2, (*n).clone());
+        let u = z * modulo(s_inv.clone(), (*n).clone());
+        let v = sig.r.clone() * modulo(s_inv.clone(), (*n).clone());
+        let sum_two_points = (generator*u) + (self*v);
+        if let Point::Finite { x, y:_, a:_, b:_ } = sum_two_points.inner {
+            x.inner.num==sig.r
+        } else {
+            false
+        }
+    } 
 }
 
 impl Mul<BigInt> for S256Point {
