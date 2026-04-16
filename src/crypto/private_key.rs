@@ -2,7 +2,7 @@ use hmac::{Hmac, KeyInit, Mac};
 use num_bigint::{BigInt, Sign};
 use sha2::Sha256;
 
-use crate::{crypto::{s256_point::{G, N, S256Point}, secret_field::SecretField, signature::Signature}, elliptic_curve::ecc_point::Point, finite_fields::modulo_helper::{modulo, pow_modulo}};
+use crate::{crypto::{s256_point::{G, N, S256Point}, secret_field::SecretField, signature::Signature, to_32_bytes::to_32bytes_vec_big_endian}, elliptic_curve::ecc_point::Point, finite_fields::modulo_helper::{modulo, pow_modulo}};
 
 #[derive(Debug, Clone)]
 pub struct PrivateKey {
@@ -48,8 +48,8 @@ impl PrivateKey {
             z -= (*n).clone();
         }
 
-        let z_bytes = &self.to_32bytes_vec(&z);
-        let secret_bytes = &self.to_32bytes_vec(&self.secret);
+        let z_bytes = to_32bytes_vec_big_endian(&z);
+        let secret_bytes = to_32bytes_vec_big_endian(&self.secret);
         
         // for k
         let mut k_hmac = Hmac::<Sha256>::new_from_slice(&k).unwrap();
@@ -97,19 +97,5 @@ impl PrivateKey {
             v = v_hmac.finalize().into_bytes().to_vec();
         }
         BigInt::from_bytes_be(Sign::Plus, &v)
-    }
-
-    fn to_32bytes_vec(&self, x: &BigInt) -> Vec<u8> {
-        let (_sign, mut bytes) = x.to_bytes_be();
-
-        assert!(bytes.len() <= 32);
-
-        if bytes.len() < 32 {
-            let mut padded = vec![0u8; 32 - bytes.len()];
-            padded.extend(bytes);
-            bytes = padded;
-        }
-
-        bytes
     }
 }

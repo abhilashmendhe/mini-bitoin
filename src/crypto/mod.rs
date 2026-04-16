@@ -4,3 +4,4 @@ pub mod signature;
 pub mod hash_helper;
 pub mod secret_field;
 pub mod private_key;
+pub mod to_32_bytes;

@@ -1,9 +1,9 @@
 use std::ops::{Add, Mul};
 
-use num_bigint::BigInt;
+use num_bigint::{BigInt, Sign};
 use once_cell::sync::Lazy;
 
-use crate::{crypto::{s256_field::S256Field, signature::Signature}, elliptic_curve::{curve_field::CurveField, ecc_point::Point}, finite_fields::modulo_helper::{modulo, pow_modulo}};
+use crate::{crypto::{s256_field::{P, S256Field}, signature::Signature, to_32_bytes::to_32bytes_vec_big_endian}, elliptic_curve::{curve_field::CurveField, ecc_point::Point}, finite_fields::modulo_helper::{modulo, pow_modulo}};
 
 pub const N: Lazy<BigInt> = Lazy::new(|| {
     BigInt::parse_bytes(b"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16).unwrap()
@@ -47,6 +47,73 @@ impl S256Point {
             false
         }
     } 
+
+    pub fn sec(self, compressed: bool) -> Vec<u8> {
+        let mut serialize_data = vec![0u8;0];
+        if let Point::Finite { x, y, a: _, b: _ } = &self.inner {
+            
+            let x = &x.inner.num;
+            let y = &y.inner.num;
+
+            if compressed {
+
+                if y % BigInt::from(2) == BigInt::from(0) {
+                    serialize_data.extend(&[0x02]);
+                } else {
+                    serialize_data.extend(&[0x03]);
+                }
+                let x_32_bytes = to_32bytes_vec_big_endian(x);
+                serialize_data.extend(x_32_bytes);
+            } else {
+
+                serialize_data.extend(&[0x04]);
+
+                let x_32_bytes = to_32bytes_vec_big_endian(x);
+                serialize_data.extend(x_32_bytes);
+
+                let y_32_bytes = to_32bytes_vec_big_endian(y);
+                serialize_data.extend(y_32_bytes);
+            }
+        }
+    
+        serialize_data
+    }
+
+    pub fn parse(sec_bin: Vec<u8>) -> S256Point {
+        if sec_bin[0] == 4 {
+            let x = BigInt::from_bytes_be(Sign::Plus, &sec_bin[1..33]);
+            let y = BigInt::from_bytes_be(Sign::Plus, &sec_bin[33..65]);
+            S256Point::new(S256Field::new(x, None), S256Field::new(y, None), None, None)
+        } else {
+
+            let p = P;
+            let is_even = sec_bin[0] == 2;
+            let x = BigInt::from_bytes_be(Sign::Plus, &sec_bin[1..]);
+            
+            // right side of the equation y^2 = x^3 + 7
+            
+            // let rhs = pow_modulo(num, n, m);
+            let rhs = x.pow(3) + BigInt::from(7);
+            let s256_rhs = S256Field::new(rhs, None);
+            
+            let lhs = s256_rhs.sqrt();
+            let (even_b, odd_b) = if lhs.clone().num % BigInt::from(2) == BigInt::from(0) {
+                let even_beta = S256Field::new(lhs.clone().num, None);
+                let odd_beta = S256Field::new((*p).clone() - lhs.num, None);
+                (even_beta, odd_beta)
+            } else {
+                let even_beta = S256Field::new((*p).clone() - lhs.clone().num, None);
+                let odd_beta = S256Field::new(lhs.num, None);
+                (even_beta, odd_beta)
+            };
+
+            if is_even {
+                S256Point::new(S256Field::new(x, None), even_b, None, None)
+            } else {
+                S256Point::new(S256Field::new(x, None), odd_b, None, None)
+            }
+        }   
+    }
 }
 
 impl Mul<BigInt> for S256Point {
