@@ -12,11 +12,11 @@ impl SecretField for BigInt {
 }
 impl SecretField for String {
     fn into_bigint(self) -> BigInt {
-        single_hash(self)
+        single_hash(self).0
     }
 }
 impl SecretField for &str {
     fn into_bigint(self) -> BigInt {
-        single_hash(self.to_string())
+        single_hash(self.to_string()).0
     }
 }
