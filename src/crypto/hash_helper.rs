@@ -1,14 +1,16 @@
-use num_bigint::{BigInt, Sign};
+use ripemd::Ripemd160;
 use sha2::{Digest, Sha256};
 
-pub fn single_hash(data: String) -> (BigInt, String) {
-    // let data = data.as_bytes();
-    let hash = Sha256::digest(data);
-    (BigInt::from_bytes_be(Sign::Plus, &hash), hex::encode(hash))
+pub fn sha256(data: &[u8]) -> Vec<u8> {
+    Sha256::digest(data).to_vec()
 }
-pub fn double_hash(data: String) -> (BigInt, String) {
-    // let data = data.as_bytes();
-    let hash = Sha256::digest(data);
-    let hash1 = Sha256::digest(&hash);
-    (BigInt::from_bytes_be(Sign::Plus, &hash1), hex::encode(hash))
+
+pub fn hash256(data: &[u8]) -> Vec<u8> {
+    Sha256::digest(&Sha256::digest(data)).to_vec()
+}
+
+pub fn hash160(data: &[u8]) -> Vec<u8> {
+    let sha256_hash = Sha256::digest(data);
+    let ripemd160_hash = Ripemd160::digest(sha256_hash);
+    ripemd160_hash.to_vec()
 }

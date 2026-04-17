@@ -1,12 +1,16 @@
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
+use crate::crypto::hash_helper::hash256;
 
-use crate::crypto::hash_helper::single_hash;
+// use crate::crypto::hash_helper::single_hash;
 
 pub fn to_32bytes_vec_big_endian(data: &BigInt) -> Vec<u8> {
     let (_, data_bytes) = data.to_bytes_be();
     let mut data_bytes = data_bytes;
-    if data_bytes.len() < 32 {
+    if data_bytes.len() > 32 {
+        // truncate (keep least significant bytes)
+        data_bytes = data_bytes[data_bytes.len() - 32..].to_vec();
+    } else if data_bytes.len() < 32 {
         let mut padd_ext = vec![0u8; 32-data_bytes.len()];
         padd_ext.extend(&data_bytes);
         data_bytes = padd_ext;
@@ -14,34 +18,45 @@ pub fn to_32bytes_vec_big_endian(data: &BigInt) -> Vec<u8> {
     data_bytes
 }
 
-pub fn base58(data: &Vec<u8>) -> String {
+pub fn int_to_little_endian(n: &BigInt, length: usize) -> Vec<u8> {
+    let (_, mut bytes) = n.to_bytes_le();
+    bytes.resize(length, 0u8);
+    bytes
+}
+
+pub fn little_endian_to_int(bytes: &[u8]) -> BigInt {
+    BigInt::from_bytes_le(num_bigint::Sign::Plus, bytes)
+}
+
+pub fn base58(data: &[u8]) -> String {
     let base58_alpha = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".chars().collect::<Vec<_>>();
-    let l_zero_ind = if let Some(lzind) = data.iter().rposition(|&v| v==0) {lzind} else {0};
-    let ahead_zero_count = data[..l_zero_ind].len();   
-    let prefix = "1".repeat(ahead_zero_count);
-    let num_big = BigInt::from_bytes_be(num_bigint::Sign::Plus,&data);
+    
+    let leading_zeros = data.iter().take_while(|&&b| b == 0).count();
+    let prefix = "1".repeat(leading_zeros);
+    // let prefix = "".to_string();
+    
+    let mut num = BigInt::from_bytes_be(num_bigint::Sign::Plus,&data);
+    
     let mut res = String::new();
-    let mut num = num_big;
-    while num.clone() > BigInt::from(0) {
+    let base = BigInt::from(58);
+    while num > BigInt::from(0) {
 
-        let rem: BigInt = &num % 58;
-        let rem_usize = &rem.to_usize().unwrap();
-        let quot = &num / 58;
-        num = quot;
+        let rem = (&num % &base).to_usize().unwrap();
+        num = &num / &base;
 
-        res.insert(0, base58_alpha[*rem_usize]);
+        res.insert(0, base58_alpha[rem] as char);
     }
+    // println!("{} - {}",prefix, res);
     format!("{}{}",prefix,res)
 }
 
-pub fn encode_base58_checksum(b: &Vec<u8>) -> String {
+pub fn encode_base58_checksum(b: &[u8]) -> String {
 
-    let b_hex = hex::encode(b);
-    let b_sha256 = single_hash(b_hex.clone()).0.to_str_radix(16);
-    let mut combine_a = String::new();
-    combine_a.push_str(&b_hex);
-    combine_a.push_str(&b_sha256[..4]);
-    let data_b = BigInt::parse_bytes(combine_a.as_bytes(), 16).unwrap();
-    let data = to_32bytes_vec_big_endian(&data_b);
-    base58(&data)
+    let hash = hash256(b);
+    let checksum = &hash[..4];
+   
+    let mut combined = Vec::from(b);
+    combined.extend_from_slice(checksum);
+
+    base58(&combined)
 }
