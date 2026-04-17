@@ -2,7 +2,7 @@ use hmac::{Hmac, KeyInit, Mac};
 use num_bigint::{BigInt, Sign};
 use sha2::Sha256;
 
-use crate::{crypto::{s256_point::{G, N, S256Point}, secret_field::SecretField, signature::Signature, crypto_utils::to_32bytes_vec_big_endian}, elliptic_curve::ecc_point::Point, finite_fields::modulo_helper::{modulo, pow_modulo}};
+use crate::{crypto::{crypto_utils::{encode_base58_checksum, to_32bytes_vec_big_endian}, s256_point::{G, N, S256Point}, secret_field::SecretField, signature::Signature}, elliptic_curve::ecc_point::Point, finite_fields::modulo_helper::{modulo, pow_modulo}};
 
 #[derive(Debug, Clone)]
 pub struct PrivateKey {
@@ -97,5 +97,21 @@ impl PrivateKey {
             v = v_hmac.finalize().into_bytes().to_vec();
         }
         BigInt::from_bytes_be(Sign::Plus, &v)
+    }
+
+    pub fn wif(self, compressed: bool, testnet: bool) -> String {
+        let secret_32_big = to_32bytes_vec_big_endian(&self.secret);
+        let mut ret_result = Vec::new();
+        if testnet {
+            ret_result.extend([0xef]);
+            ret_result.extend(secret_32_big);
+        } else {
+            ret_result.extend([0x80]);
+            ret_result.extend(secret_32_big);
+        }
+        if compressed {
+            ret_result.extend([0x01]);
+        }
+        encode_base58_checksum(&ret_result)
     }
 }

@@ -3,7 +3,7 @@ use std::ops::{Add, Mul};
 use num_bigint::{BigInt, Sign};
 use once_cell::sync::Lazy;
 
-use crate::{crypto::{s256_field::{P, S256Field}, signature::Signature, crypto_utils::to_32bytes_vec_big_endian}, elliptic_curve::{curve_field::CurveField, ecc_point::Point}, finite_fields::modulo_helper::{modulo, pow_modulo}};
+use crate::{crypto::{crypto_utils::{encode_base58_checksum, to_32bytes_vec_big_endian}, hash_helper::hash160, s256_field::{P, S256Field}, signature::Signature}, elliptic_curve::{curve_field::CurveField, ecc_point::Point}, finite_fields::modulo_helper::{modulo, pow_modulo}};
 
 pub const N: Lazy<BigInt> = Lazy::new(|| {
     BigInt::parse_bytes(b"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16).unwrap()
@@ -113,6 +113,23 @@ impl S256Point {
                 S256Point::new(S256Field::new(x, None), odd_b, None, None)
             }
         }   
+    }
+
+    pub fn hash160(self, compressed: bool) -> Vec<u8> {
+        hash160(&self.sec(compressed))
+    }
+
+    pub fn address(self, compressed: bool, testnet: bool) -> String {
+        let h160 = self.hash160(compressed);
+        let mut ret_result: Vec<_> = Vec::<u8>::new();
+        if testnet {
+            ret_result.extend([0x6f]);
+            ret_result.extend(&h160);
+        } else {
+            ret_result.extend([0x00]);
+            ret_result.extend(&h160);
+        }
+        encode_base58_checksum(&ret_result)
     }
 }
 
