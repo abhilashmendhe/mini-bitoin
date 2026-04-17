@@ -2,7 +2,7 @@ use hmac::{Hmac, KeyInit, Mac};
 use num_bigint::{BigInt, Sign};
 use sha2::Sha256;
 
-use crate::{crypto::{s256_point::{G, N, S256Point}, secret_field::SecretField, signature::Signature, to_32_bytes::to_32bytes_vec_big_endian}, elliptic_curve::ecc_point::Point, finite_fields::modulo_helper::{modulo, pow_modulo}};
+use crate::{crypto::{s256_point::{G, N, S256Point}, secret_field::SecretField, signature::Signature, crypto_utils::to_32bytes_vec_big_endian}, elliptic_curve::ecc_point::Point, finite_fields::modulo_helper::{modulo, pow_modulo}};
 
 #[derive(Debug, Clone)]
 pub struct PrivateKey {

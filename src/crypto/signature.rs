@@ -1,6 +1,6 @@
 use num_bigint::BigInt;
 
-use crate::crypto::to_32_bytes::to_32bytes_vec_big_endian;
+use crate::crypto::crypto_utils::to_32bytes_vec_big_endian;
 
 #[derive(Debug, Clone)]
 pub struct Signature {

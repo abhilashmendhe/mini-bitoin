@@ -3,7 +3,7 @@ use std::ops::{Add, Mul};
 use num_bigint::{BigInt, Sign};
 use once_cell::sync::Lazy;
 
-use crate::{crypto::{s256_field::{P, S256Field}, signature::Signature, to_32_bytes::to_32bytes_vec_big_endian}, elliptic_curve::{curve_field::CurveField, ecc_point::Point}, finite_fields::modulo_helper::{modulo, pow_modulo}};
+use crate::{crypto::{s256_field::{P, S256Field}, signature::Signature, crypto_utils::to_32bytes_vec_big_endian}, elliptic_curve::{curve_field::CurveField, ecc_point::Point}, finite_fields::modulo_helper::{modulo, pow_modulo}};
 
 pub const N: Lazy<BigInt> = Lazy::new(|| {
     BigInt::parse_bytes(b"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16).unwrap()
