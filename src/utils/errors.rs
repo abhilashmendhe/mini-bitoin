@@ -1,4 +1,4 @@
-use core::error;
+use std::array::TryFromSliceError;
 
 use hex::FromHexError;
 use num_bigint::BigInt;
@@ -23,4 +23,7 @@ pub enum BTCErr {
 
     #[error("{}",.0)]
     IoErr(#[from] std::io::Error),
+
+    #[error("{}",.0)]
+    SliceErrorFromBytes(#[from] TryFromSliceError),
 }
