@@ -5,7 +5,6 @@ pub fn modulo(num: BigInt, m: BigInt) -> BigInt {
 }
 
 pub fn pow_modulo(num: BigInt, n: BigInt, m: BigInt) -> BigInt {
-
     let mut result = BigInt::from(1);
     let mut x = num;
     let mut n = n;

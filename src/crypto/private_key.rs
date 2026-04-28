@@ -2,12 +2,21 @@ use hmac::{Hmac, KeyInit, Mac};
 use num_bigint::{BigInt, Sign};
 use sha2::Sha256;
 
-use crate::{crypto::{crypto_utils::{encode_base58_checksum, to_32bytes_vec_big_endian}, s256_point::{G, N, S256Point}, secret_field::SecretField, signature::Signature}, elliptic_curve::ecc_point::Point, finite_fields::modulo_helper::{modulo, pow_modulo}};
+use crate::{
+    crypto::{
+        crypto_utils::{encode_base58_checksum, to_32bytes_vec_big_endian},
+        s256_point::{G, N, S256Point},
+        secret_field::SecretField,
+        signature::Signature,
+    },
+    elliptic_curve::ecc_point::Point,
+    finite_fields::modulo_helper::{modulo, pow_modulo},
+};
 
 #[derive(Debug, Clone)]
 pub struct PrivateKey {
     pub secret: BigInt,
-    pub point: S256Point
+    pub point: S256Point,
 }
 
 impl PrivateKey {
@@ -28,11 +37,22 @@ impl PrivateKey {
         let k = self.clone().deterministic(z.clone());
         let g = G;
         let n = N;
-        let r = if let Point::Finite { x, y:_, a:_, b:_ } = ((*g).clone() * k.clone()).inner {
+        let r = if let Point::Finite {
+            x,
+            y: _,
+            a: _,
+            b: _,
+        } = ((*g).clone() * k.clone()).inner
+        {
             x.inner.num
-        } else { panic!("No r point found to sign") };
+        } else {
+            panic!("No r point found to sign")
+        };
         let k_inv = pow_modulo(k.clone(), (*n).clone() - 2, (*n).clone());
-        let mut s = modulo((z.clone() + (&self.secret * r.clone())) * k_inv, (*n).clone());
+        let mut s = modulo(
+            (z.clone() + (&self.secret * r.clone())) * k_inv,
+            (*n).clone(),
+        );
         if s > (*n).clone() / 2 {
             s = (*n).clone() - s;
         }
@@ -42,15 +62,15 @@ impl PrivateKey {
     pub fn deterministic(self, z: BigInt) -> BigInt {
         let n = N;
         let mut z = z;
-        let mut k = vec![0x00u8;32];
-        let mut v = vec![0x01u8;32];
+        let mut k = vec![0x00u8; 32];
+        let mut v = vec![0x01u8; 32];
         if z > (*n).clone() {
             z -= (*n).clone();
         }
 
         let z_bytes = to_32bytes_vec_big_endian(&z);
         let secret_bytes = to_32bytes_vec_big_endian(&self.secret);
-        
+
         // for k
         let mut k_hmac = Hmac::<Sha256>::new_from_slice(&k).unwrap();
         k_hmac.update(&v);
@@ -61,7 +81,7 @@ impl PrivateKey {
 
         // for v
         let mut v_hmac = Hmac::<Sha256>::new_from_slice(&k).unwrap();
-        v_hmac.update(&v);  
+        v_hmac.update(&v);
         v = v_hmac.finalize().into_bytes().to_vec();
 
         // again for k
@@ -74,12 +94,12 @@ impl PrivateKey {
 
         // again for v
         let mut v_hmac = Hmac::<Sha256>::new_from_slice(&k).unwrap();
-        v_hmac.update(&v);  
+        v_hmac.update(&v);
         v = v_hmac.finalize().into_bytes().to_vec();
 
         loop {
             let mut v_hmac = Hmac::<Sha256>::new_from_slice(&k).unwrap();
-            v_hmac.update(&v);  
+            v_hmac.update(&v);
             v = v_hmac.finalize().into_bytes().to_vec();
 
             let candidate = BigInt::from_bytes_be(Sign::Plus, &v);
@@ -93,7 +113,7 @@ impl PrivateKey {
             k = k_hmac.finalize().into_bytes().to_vec();
 
             let mut v_hmac = Hmac::<Sha256>::new_from_slice(&k).unwrap();
-            v_hmac.update(&v);  
+            v_hmac.update(&v);
             v = v_hmac.finalize().into_bytes().to_vec();
         }
         BigInt::from_bytes_be(Sign::Plus, &v)

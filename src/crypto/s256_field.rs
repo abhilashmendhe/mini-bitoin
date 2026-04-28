@@ -5,13 +5,12 @@ use once_cell::sync::Lazy;
 
 use crate::finite_fields::field_element::FieldElement;
 
-pub const P: Lazy<BigInt> = Lazy::new(|| {
-    BigInt::from(2).pow(256) - BigInt::from(2).pow(32) - BigInt::from(977)
-});
+pub const P: Lazy<BigInt> =
+    Lazy::new(|| BigInt::from(2).pow(256) - BigInt::from(2).pow(32) - BigInt::from(977));
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone)]
 pub struct S256Field {
-    pub inner: FieldElement
+    pub inner: FieldElement,
 }
 
 impl S256Field {

@@ -1,2 +1,2 @@
-pub mod ecc_point;
 pub mod curve_field;
+pub mod ecc_point;
