@@ -17,7 +17,7 @@ impl TxIn {
         let script_sig = if let Some(sc) = script_sig {
             sc
         } else {
-            Script
+            Script::new(None)
         };
         Self {
             prev_tx,
