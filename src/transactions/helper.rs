@@ -1,4 +1,6 @@
-use crate::utils::errors::BTCErr;
+use num_bigint::BigInt;
+
+use crate::{crypto::crypto_utils::int_to_little_endian, utils::errors::BTCErr};
 
 pub fn read_variant(pos: usize, buffer: &[u8], out: u8) -> Result<(u64, usize), BTCErr> {
     match out {
@@ -29,5 +31,26 @@ pub fn read_variant(pos: usize, buffer: &[u8], out: u8) -> Result<(u64, usize), 
             // }
             Ok((buffer[pos] as u64, pos + 1))
         }
+    }
+}
+
+
+pub fn encode_variant(n: BigInt) -> Vec<u8> {
+
+    if n < BigInt::from(0xfd) {
+        // n.to_signed_bytes_be()
+        n.to_bytes_be().1
+    } else if n < BigInt::from(0x10000) {
+        let mut b = b"fd".to_vec();
+        b.extend_from_slice(&int_to_little_endian(&n, 2));
+        b
+    } else if n < BigInt::from(0x100000000 as u64) {
+        let mut b = b"fe".to_vec();
+        b.extend_from_slice(&int_to_little_endian(&n, 4));
+        b
+    } else {
+        let mut b = b"ff".to_vec();
+        b.extend_from_slice(&int_to_little_endian(&n, 8));
+        b
     }
 }
