@@ -34,9 +34,7 @@ pub fn read_variant(pos: usize, buffer: &[u8], out: u8) -> Result<(u64, usize), 
     }
 }
 
-
 pub fn encode_variant(n: BigInt) -> Vec<u8> {
-
     if n < BigInt::from(0xfd) {
         // n.to_signed_bytes_be()
         n.to_bytes_be().1
