@@ -29,7 +29,7 @@ pub fn decode_num(mut element: Vec<u8>) -> i64 {
     element.reverse();
 
     let mut neg = true;
-    let mut result: i64 = 0;
+    let mut result: i64;
     if element[0] & 0x80 == 0 {
         neg = false;
         result = element[0] as i64;

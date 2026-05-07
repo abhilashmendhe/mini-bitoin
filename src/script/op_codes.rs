@@ -1,3 +1,8 @@
+use crate::script::{
+    helper::encode_num,
+    op_codes_helper::{op_dup, op_hash160, op_hash256},
+};
+
 #[allow(non_camel_case_types)]
 pub enum OP_CODES {
     UNSET = -1,
@@ -94,7 +99,106 @@ pub enum OP_CODES {
 }
 
 impl OP_CODES {
-    pub fn push_to_stack(op_code: OP_CODES, stack: Vec<Vec<u8>>) {
+    pub fn push_to_stack(op_code: OP_CODES, stack: &mut Vec<Vec<u8>>) {
         // 1.to_le_bytes();
+        match op_code {
+            OP_CODES::UNSET => todo!(),
+            OP_CODES::OP_0 => stack.push(encode_num(0)),
+            OP_CODES::OP_PUSHDATA1 => todo!(),
+            OP_CODES::OP_PUSHDATA2 => todo!(),
+            OP_CODES::OP_PUSHDATA4 => todo!(),
+            OP_CODES::OP_1NEGATE => todo!(),
+            OP_CODES::OP_1 => stack.push(encode_num(1)),
+            OP_CODES::OP_2 => stack.push(encode_num(2)),
+            OP_CODES::OP_3 => stack.push(encode_num(3)),
+            OP_CODES::OP_4 => stack.push(encode_num(4)),
+            OP_CODES::OP_5 => stack.push(encode_num(5)),
+            OP_CODES::OP_6 => stack.push(encode_num(6)),
+            OP_CODES::OP_7 => stack.push(encode_num(7)),
+            OP_CODES::OP_8 => stack.push(encode_num(8)),
+            OP_CODES::OP_9 => stack.push(encode_num(9)),
+            OP_CODES::OP_10 => stack.push(encode_num(10)),
+            OP_CODES::OP_11 => stack.push(encode_num(11)),
+            OP_CODES::OP_12 => stack.push(encode_num(12)),
+            OP_CODES::OP_13 => stack.push(encode_num(13)),
+            OP_CODES::OP_14 => stack.push(encode_num(14)),
+            OP_CODES::OP_15 => stack.push(encode_num(15)),
+            OP_CODES::OP_16 => stack.push(encode_num(16)),
+            OP_CODES::OP_NOP => todo!(),
+            OP_CODES::OP_IF => todo!(),
+            OP_CODES::OP_NOTIF => todo!(),
+            OP_CODES::OP_ELSE => todo!(),
+            OP_CODES::OP_ENDIF => todo!(),
+            OP_CODES::OP_VERIFY => todo!(),
+            OP_CODES::OP_RETURN => todo!(),
+            OP_CODES::OP_TOALTSTACK => todo!(),
+            OP_CODES::OP_FROMALTSTACK => todo!(),
+            OP_CODES::OP_2DROP => todo!(),
+            OP_CODES::OP_2DUP => todo!(),
+            OP_CODES::OP_3DUP => todo!(),
+            OP_CODES::OP_2OVER => todo!(),
+            OP_CODES::OP_2ROT => todo!(),
+            OP_CODES::OP_2SWAP => todo!(),
+            OP_CODES::OP_IFDUP => todo!(),
+            OP_CODES::OP_DEPTH => todo!(),
+            OP_CODES::OP_DROP => todo!(),
+            OP_CODES::OP_DUP => {
+                op_dup(stack);
+            }
+            OP_CODES::OP_NIP => todo!(),
+            OP_CODES::OP_OVER => todo!(),
+            OP_CODES::OP_PICK => todo!(),
+            OP_CODES::OP_ROLL => todo!(),
+            OP_CODES::OP_ROT => todo!(),
+            OP_CODES::OP_SWAP => todo!(),
+            OP_CODES::OP_TUCK => todo!(),
+            OP_CODES::OP_SIZE => todo!(),
+            OP_CODES::OP_EQUAL => todo!(),
+            OP_CODES::OP_EQUALVERIFY => todo!(),
+            OP_CODES::OP_1ADD => todo!(),
+            OP_CODES::OP_1SUB => todo!(),
+            OP_CODES::OP_NEGATE => todo!(),
+            OP_CODES::OP_ABS => todo!(),
+            OP_CODES::OP_NOT => todo!(),
+            OP_CODES::OP_0NOTEQUAL => todo!(),
+            OP_CODES::OP_ADD => todo!(),
+            OP_CODES::OP_SUB => todo!(),
+            OP_CODES::OP_BOOLAND => todo!(),
+            OP_CODES::OP_BOOLOR => todo!(),
+            OP_CODES::OP_NUMEQUAL => todo!(),
+            OP_CODES::OP_NUMEQUALVERIFY => todo!(),
+            OP_CODES::OP_NUMNOTEQUAL => todo!(),
+            OP_CODES::OP_LESSTHAN => todo!(),
+            OP_CODES::OP_GREATERTHAN => todo!(),
+            OP_CODES::OP_LESSTHANOREQUAL => todo!(),
+            OP_CODES::OP_GREATERTHANOREQUAL => todo!(),
+            OP_CODES::OP_MIN => todo!(),
+            OP_CODES::OP_MAX => todo!(),
+            OP_CODES::OP_WITHIN => todo!(),
+            OP_CODES::OP_RIPEMD160 => todo!(),
+            OP_CODES::OP_SHA1 => todo!(),
+            OP_CODES::OP_SHA256 => todo!(),
+            OP_CODES::OP_HASH160 => {
+                op_hash160(stack);
+            },
+            OP_CODES::OP_HASH256 => {
+                op_hash256(stack);
+            }
+            OP_CODES::OP_CODESEPARATOR => todo!(),
+            OP_CODES::OP_CHECKSIG => todo!(),
+            OP_CODES::OP_CHECKSIGVERIFY => todo!(),
+            OP_CODES::OP_CHECKMULTISIG => todo!(),
+            OP_CODES::OP_CHECKMULTISIGVERIFY => todo!(),
+            OP_CODES::OP_NOP1 => todo!(),
+            OP_CODES::OP_CHECKLOCKTIMEVERIFY => todo!(),
+            OP_CODES::OP_CHECKSEQUENCEVERIFY => todo!(),
+            OP_CODES::OP_NOP4 => todo!(),
+            OP_CODES::OP_NOP5 => todo!(),
+            OP_CODES::OP_NOP6 => todo!(),
+            OP_CODES::OP_NOP7 => todo!(),
+            OP_CODES::OP_NOP8 => todo!(),
+            OP_CODES::OP_NOP9 => todo!(),
+            OP_CODES::OP_NOP10 => todo!(),
+        }
     }
 }
