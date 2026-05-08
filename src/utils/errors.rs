@@ -26,4 +26,7 @@ pub enum BTCErr {
 
     #[error("{}",.0)]
     SliceErrorFromBytes(#[from] TryFromSliceError),
+
+    #[error("{}", .0)]
+    ScriptParseFailed(String),
 }
