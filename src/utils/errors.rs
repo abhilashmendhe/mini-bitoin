@@ -29,4 +29,7 @@ pub enum BTCErr {
 
     #[error("{}", .0)]
     ScriptParseFailed(String),
+
+    #[error("{}",.0)]
+    ScriptSerializeFailed(String),
 }
