@@ -25,7 +25,7 @@ impl Script {
         let pos = 0;
         let f_pos = script_pub_key[pos];
         let (until_next, mut pos) = read_variant(pos, &script_pub_key, f_pos).unwrap();
-        // pos += 1;
+        pos += 1;
         // println!("next pos: {}, len: {}", until_next, pos);
         // println!("{:?}",script_pub_key[pos..next_pos]);
         while pos <= until_next as usize {
