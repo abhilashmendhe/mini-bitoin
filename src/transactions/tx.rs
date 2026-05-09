@@ -4,8 +4,7 @@ use std::{
 };
 
 use crate::{
-    transactions::{helper::read_variant, tx_in::TxIn, tx_out::TxOut},
-    utils::errors::BTCErr,
+    script::script::script_encode_variant, transactions::{helper::{encode_variant, read_variant}, tx_in::TxIn, tx_out::TxOut}, utils::errors::BTCErr
 };
 
 #[derive(Debug)]
@@ -75,5 +74,22 @@ impl Tx {
         // println!("\nLocktime bytes: {:?}", locktime_bytes);
         // println!("Locktime: {}", locktime);
         Ok(Tx::new(_version, _tx_ins, _tx_outs, locktime, true))
+    }
+
+    pub fn serailize(&self) -> Result<Vec<u8>, BTCErr> {
+        let mut result = vec![];
+        result.extend(self.version.to_le_bytes());
+        result.extend(script_encode_variant(self.tx_ins.len() as u64));
+        for tx_in in &self.tx_ins {
+            result.extend(tx_in.serialize()?);
+        }
+
+        result.extend(script_encode_variant(self.tx_outs.len() as u64));
+        for tx_out in &self.tx_outs {
+            result.extend(tx_out.serialize()?);
+        }
+
+        result.extend(self.locktime.to_le_bytes());
+        Ok(result)
     }
 }

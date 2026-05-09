@@ -37,7 +37,7 @@ impl TxIn {
     ) -> Result<VecDeque<TxIn>, BTCErr> {
         let mut tx_ins = VecDeque::new();
         while t_num_inputs > 0 {
-            let prev_trans_id_bytes = &buffer[*pos..*pos + 32];
+            let mut prev_trans_id_bytes = buffer[*pos..*pos + 32].to_vec();
             *pos = *pos + 32;
             let prev_trans_ind_bytes = &buffer[*pos..*pos + 4];
             let prev_trans_index = u32::from_le_bytes(
@@ -67,6 +67,7 @@ impl TxIn {
             // println!("Seq and Lock: {:?}", );/
             *pos += 4;
             t_num_inputs -= 1;
+            prev_trans_id_bytes.reverse();
             tx_ins.push_back(TxIn::new(
                 prev_trans_id_bytes.to_vec(),
                 prev_trans_index as usize,
@@ -75,5 +76,16 @@ impl TxIn {
             ));
         }
         Ok(tx_ins)
+    }
+
+    pub fn serialize(&self) -> Result<Vec<u8>, BTCErr> {
+        let mut result = vec![];
+        let mut prev_tx = self.prev_tx.clone();
+        prev_tx.reverse();
+        result.extend(prev_tx);
+        result.extend((self.prev_ind as u32).to_le_bytes());
+        result.extend(self.script_sig.serailize()?);
+        result.extend((self.sequence as u32).to_le_bytes());
+        Ok(result)
     }
 }

@@ -51,9 +51,9 @@ impl TxOut {
             // println!("Script pub key size: {}", sc_pk_size);
             // println!(
             //     "Script pub key: {:?}",
-            //     &buffer[*pos..*pos + sc_pk_size as usize]
+            //     &buffer[*pos..*pos + sc_pk_size as usize + 1]
             // );
-            let script_pub_key = Script::parse(buffer[*pos..*pos + sc_pk_size as usize].to_vec())?;
+            let script_pub_key = Script::parse(buffer[*pos..*pos + sc_pk_size as usize + 1].to_vec())?;
             // println!("{:?}", script_pub_key);
             *pos = *pos + sc_pk_size as usize + 1;
             t_num_outputs -= 1;
@@ -65,5 +65,13 @@ impl TxOut {
             ));
         }
         Ok(tx_outs)
+    }
+
+    pub fn serialize(&self) -> Result<Vec<u8>, BTCErr> {
+        let mut result = vec![];
+        let amount_bytes = self.satoshis.0.to_le_bytes();
+        result.extend(amount_bytes);
+        result.extend(self.script_pub_key.serailize()?);
+        Ok(result)
     }
 }
