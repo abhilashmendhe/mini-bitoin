@@ -8,6 +8,7 @@ use crate::{
     utils::errors::BTCErr,
 };
 
+#[derive(Debug)]
 pub struct Tx {
     pub version: u32,           // defines what additional features the transaction uses,
     pub tx_ins: VecDeque<TxIn>, // defines what bitcoins are being spent
@@ -33,8 +34,12 @@ impl Tx {
         }
     }
 
-    pub fn parse(&self, stream: String) -> Result<(), BTCErr> {
+    pub fn parse(&self, stream: String) -> Result<Tx, BTCErr> {
         let bytes = hex::decode(stream)?;
+        // println!("Whole bytes size: {}", bytes.len());
+        // println!("Whole bytes: {:?}\n", bytes);
+        // println!("");
+
         let mut cursor = Cursor::new(bytes);
 
         let mut buffer = Vec::new();
@@ -45,58 +50,30 @@ impl Tx {
         let _version = u32::from_le_bytes(buffer[..4].try_into()?);
         let pos = 4;
         let out = buffer[pos];
-        let (mut t_num_inputs, mut pos) = read_variant(pos, &buffer, out)?;
+        let (t_num_inputs, mut pos) = read_variant(pos, &buffer, out)?;
 
-        println!("\n-------------- Extract Inputs --------------");
-        println!("Number of transaction inputs: {}", t_num_inputs);
-        while t_num_inputs > 0 {
-            let prev_trans_id = &buffer[pos..pos + 32];
-            pos = pos + 32;
-            let prev_trans_ind = &buffer[pos..pos + 4];
-            pos = pos + 4;
-            println!("Prev transaction id: {:?}", prev_trans_id);
-            println!("Prev transaction ind: {:?}", prev_trans_ind);
+        // println!("\n-------------- Extract Inputs --------------");
+        // println!("Number of transaction inputs: {}", t_num_inputs);
+        // println!("current pos: {}", pos);
 
-            let sc_size = buffer[pos];
-            println!("Script size: {}", sc_size);
-            pos += sc_size as usize + 1;
-            println!("new pos: {}", pos);
-            println!("Seq and Lock: {:?}", &buffer[pos..pos + 4]);
-            pos += 4;
-            t_num_inputs -= 1;
-        }
+        let _tx_ins = TxIn::parse(t_num_inputs, &mut pos, &buffer)?;
+        // println!("current pos: {}", pos);
 
         // Now extract transactin outputs
-        println!("\n-------------- Extract outputs --------------");
-        let mut t_num_outputs = buffer[pos];
-        println!("Number of transaction output: {}", t_num_outputs);
+        // println!("\n-------------- Extract outputs --------------");
+        let t_num_outputs = buffer[pos];
+        // println!("Number of transaction output: {}", t_num_outputs);
         pos += 1;
 
-        while t_num_outputs > 0 {
-            let amt_bytes = &buffer[pos..pos + 8];
-            println!("Amt bytes: {:?}", amt_bytes);
-            println!(
-                "Amt: {}",
-                u64::from_le_bytes(amt_bytes.try_into().expect("Incorrect slice length"))
-            );
-            pos = pos + 8;
+        let _tx_outs = TxOut::parse(t_num_outputs as u64, &mut pos, &buffer)?;
 
-            let sc_pk_size = buffer[pos];
-            println!("Script pub key size: {}", sc_pk_size);
-            println!(
-                "Script pub key: {:?}",
-                &buffer[pos..pos + sc_pk_size as usize]
-            );
-            pos = pos + sc_pk_size as usize + 1;
-            t_num_outputs -= 1;
-        }
         // println!();
         let locktime_bytes = &buffer[pos..];
         let locktime =
             u32::from_le_bytes(locktime_bytes.try_into().expect("Incorrect slice lenght"));
 
-        println!("\nLocktime bytes: {:?}", locktime_bytes);
-        println!("Locktime: {}", locktime);
-        Ok(())
+        // println!("\nLocktime bytes: {:?}", locktime_bytes);
+        // println!("Locktime: {}", locktime);
+        Ok(Tx::new(_version, _tx_ins, _tx_outs, locktime, true))
     }
 }
