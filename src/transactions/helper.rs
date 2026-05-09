@@ -29,7 +29,7 @@ pub fn read_variant(pos: usize, buffer: &[u8], out: u8) -> Result<(u64, usize), 
             // if buffer.len() <= pos {
             //     return Err(BTCErr::OutOfBounds);
             // }
-            Ok((buffer[pos] as u64, pos + 1))
+            Ok((buffer[pos] as u64, pos))
         }
     }
 }
