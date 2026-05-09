@@ -32,4 +32,7 @@ pub enum BTCErr {
 
     #[error("{}",.0)]
     ScriptSerializeFailed(String),
+
+    #[error("{}", .0)]
+    FromReqwestError(#[from] reqwest::Error),
 }
