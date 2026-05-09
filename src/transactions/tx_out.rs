@@ -53,7 +53,8 @@ impl TxOut {
             //     "Script pub key: {:?}",
             //     &buffer[*pos..*pos + sc_pk_size as usize + 1]
             // );
-            let script_pub_key = Script::parse(buffer[*pos..*pos + sc_pk_size as usize + 1].to_vec())?;
+            let script_pub_key =
+                Script::parse(buffer[*pos..*pos + sc_pk_size as usize + 1].to_vec())?;
             // println!("{:?}", script_pub_key);
             *pos = *pos + sc_pk_size as usize + 1;
             t_num_outputs -= 1;
