@@ -20,8 +20,14 @@ const BLOCKSTREAM_MAINNET: &'static str = "https://blockstream.info/api";
 const BLOCKSTREAM_TESTNET: &'static str = "https://blockstream.info/testnet/api";
 
 #[derive(Debug)]
+pub enum NET {
+    MAINNET,
+    TESTNET
+}
+
+#[derive(Debug)]
 pub struct TxFetcher {
-    cache: HashMap<String, (String, Tx)>,
+    cache: HashMap<String, (NET, Tx)>,
 }
 
 impl TxFetcher {
@@ -36,7 +42,9 @@ impl TxFetcher {
             let response = reqwest::blocking::get(url).unwrap().text().unwrap();
             
             let tx = Tx::parse(response)?;
-            println!("{:?}",tx);
+            println!("{}",tx_id);
+            println!("{}",tx.id()?);
+            
             // println!("{:?}", response);
         }
         Ok(())

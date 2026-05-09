@@ -7,9 +7,7 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 
 use crate::{
-    script::script::script_encode_variant,
-    transactions::{helper::read_variant, tx_fetcher::get_url, tx_in::TxIn, tx_out::TxOut},
-    utils::errors::BTCErr,
+    crypto::hash_helper::hash256, script::script::script_encode_variant, transactions::{helper::read_variant, tx_fetcher::get_url, tx_in::TxIn, tx_out::TxOut}, utils::errors::BTCErr
 };
 
 #[derive(Debug)]
@@ -39,6 +37,16 @@ impl Tx {
             locktime,
             testnet,
         }
+    }
+    
+    pub fn hash(&self) -> Result<Vec<u8>, BTCErr> {
+        let mut h_ser = hash256(&self.serailize()?);
+        h_ser.reverse();
+        Ok(h_ser)
+    }
+
+    pub fn id(&self) -> Result<String, BTCErr> {
+        Ok(hex::encode(&self.hash()?))
     }
 
     pub fn parse(stream: String) -> Result<Tx, BTCErr> {
