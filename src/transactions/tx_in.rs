@@ -1,8 +1,12 @@
 use std::collections::VecDeque;
 
-use crate::{script::script::Script, utils::errors::BTCErr};
+use crate::{
+    script::script::Script,
+    transactions::{tx::Tx, tx_fetcher::TxFetcher},
+    utils::errors::BTCErr,
+};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TxIn {
     pub prev_tx: Vec<u8>,
     pub prev_ind: usize,
@@ -87,5 +91,22 @@ impl TxIn {
         result.extend(self.script_sig.serailize()?);
         result.extend((self.sequence as u32).to_le_bytes());
         Ok(result)
+    }
+
+    pub fn fetch_tx(&self, testnet: bool) -> Result<Tx, BTCErr> {
+        let prev_tx = hex::encode(&self.prev_tx);
+        // println!("{}", prev_tx);
+        let mut tx_fetcher = TxFetcher::new();
+        let tx = tx_fetcher.fetch(prev_tx, testnet, true)?;
+        Ok(tx)
+    }
+    pub fn script_pubkey(&self, testnet: bool) -> Result<Script, BTCErr> {
+        let tx = &self.fetch_tx(testnet)?;
+        let tx_out = &tx.tx_outs[self.prev_ind];
+        Ok(tx_out.script_pub_key.clone())
+    }
+    pub fn value(&self, testnet: bool) -> Result<u64, BTCErr> {
+        let tx = &self.fetch_tx(testnet)?;
+        Ok(tx.tx_outs[self.prev_ind].satoshis.amount())
     }
 }
