@@ -12,12 +12,13 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Tx {
-    pub version: u32,           // defines what additional features the transaction uses,
-    pub segwit: bool,           // legacy or segwit
-    pub tx_ins: VecDeque<TxIn>, // defines what bitcoins are being spent
+    pub version: u32,             // defines what additional features the transaction uses,
+    pub segwit: bool,             // legacy or segwit
+    pub tx_ins: VecDeque<TxIn>,   // defines what bitcoins are being spent
     pub tx_outs: VecDeque<TxOut>, // defines where the bitcoins are going
-    pub locktime: u32,          // defines when this transaction starts being valid
-    pub testnet: bool,          // On testnet, or mainnet
+    pub witness: Vec<Vec<u8>>,    // Witness, that stores stack of vec u8
+    pub locktime: u32,            // defines when this transaction starts being valid
+    pub testnet: bool,            // On testnet, or mainnet
 }
 
 impl Tx {
@@ -26,6 +27,7 @@ impl Tx {
         segwit: bool,
         tx_ins: VecDeque<TxIn>,
         tx_outs: VecDeque<TxOut>,
+        witness: Vec<Vec<u8>>,
         locktime: u32,
         testnet: bool,
     ) -> Self {
@@ -34,6 +36,7 @@ impl Tx {
             segwit,
             tx_ins,
             tx_outs,
+            witness,
             locktime,
             testnet,
         }
@@ -101,18 +104,21 @@ impl Tx {
         // println!("\n\nAfter parsing outputs: {:?}\n\n", &buffer[pos..]);
         // println!();
         // -------------------------- parse witness ---------------------------
+        let mut witness = vec![];
         if segwit {
             let mut i = 0;
             while i < t_num_inputs {
                 // println!("Num witness inp:{}", &buffer[pos]);
                 let sig_len = buffer[pos + 1] as usize;
                 let _signature = &buffer[pos + 2..pos + sig_len + 2];
+                witness.push(_signature.to_vec());
                 // println!("{:?}", &buffer[pos + 2..pos + sig_len + 2]);
                 pos += sig_len + 2;
                 let pubkey_len = buffer[pos] as usize;
                 // println!("pubkey len: {}", pubkey_len);
                 // println!("{:?}", &buffer[pos + 1..pos + pubkey_len + 1]);
                 let _pubkey = &buffer[pos + 1..pos + pubkey_len + 1];
+                witness.push(_pubkey.to_vec());
                 pos += pubkey_len + 1;
                 i += 1;
             }
@@ -126,7 +132,7 @@ impl Tx {
 
         // println!("\nLocktime bytes: {:?}", locktime_bytes);
         // println!("Locktime: {}", locktime);
-        Ok(Tx::new(_version, segwit, _tx_ins, _tx_outs, locktime, true))
+        Ok(Tx::new(_version, segwit, _tx_ins, _tx_outs, witness, locktime, true))
     }
 
     pub fn serailize(&self) -> Result<Vec<u8>, BTCErr> {
@@ -137,9 +143,19 @@ impl Tx {
             result.extend(tx_in.serialize()?);
         }
 
+        if self.segwit {
+            result.extend(&[0, 1]);
+        }
+
         result.extend(script_encode_variant(self.tx_outs.len() as u64));
         for tx_out in &self.tx_outs {
             result.extend(tx_out.serialize()?);
+        }
+
+        if self.segwit {
+            for v in &self.witness {
+                result.extend(v);
+            }
         }
 
         result.extend(self.locktime.to_le_bytes());
