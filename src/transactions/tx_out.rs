@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use crate::{script::script::Script, utils::errors::BTCErr};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Satoshis(u64);
 
 impl Satoshis {
@@ -14,13 +14,20 @@ impl Satoshis {
         self.0 as f64 / 100_000_000.0
     }
 }
+
+impl Satoshis {
+    pub fn amount(&self) -> u64 {
+        self.0
+    }
+}
+
 impl From<u64> for Satoshis {
     fn from(value: u64) -> Self {
         Satoshis(value)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TxOut {
     pub satoshis: Satoshis,
     pub script_pub_key: Script,
