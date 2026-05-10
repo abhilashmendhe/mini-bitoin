@@ -7,18 +7,21 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 
 use crate::{
-    crypto::hash_helper::hash256, script::script::script_encode_variant, transactions::{helper::read_variant, tx_fetcher::get_url, tx_in::TxIn, tx_out::TxOut}, utils::errors::BTCErr
+    crypto::hash_helper::hash256,
+    script::script::script_encode_variant,
+    transactions::{helper::read_variant, tx_fetcher::get_url, tx_in::TxIn, tx_out::TxOut},
+    utils::errors::BTCErr,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Tx {
-    pub version: u32,             // defines what additional features the transaction uses,
-    pub segwit: bool,             // legacy or segwit
-    pub tx_ins: VecDeque<TxIn>,   // defines what bitcoins are being spent
+    pub version: u32,           // defines what additional features the transaction uses,
+    pub segwit: bool,           // legacy or segwit
+    pub tx_ins: VecDeque<TxIn>, // defines what bitcoins are being spent
     pub tx_outs: VecDeque<TxOut>, // defines where the bitcoins are going
-    pub witness: Vec<Vec<u8>>,    // Witness, that stores stack of vec u8
-    pub locktime: u32,            // defines when this transaction starts being valid
-    pub testnet: bool,            // On testnet, or mainnet
+    pub witness: Vec<Vec<u8>>,  // Witness, that stores stack of vec u8
+    pub locktime: u32,          // defines when this transaction starts being valid
+    pub testnet: bool,          // On testnet, or mainnet
 }
 
 impl Tx {
@@ -41,7 +44,7 @@ impl Tx {
             testnet,
         }
     }
-    
+
     pub fn hash(&self) -> Result<Vec<u8>, BTCErr> {
         let mut h_ser = hash256(&self.serialize()?);
         h_ser.reverse();
@@ -134,7 +137,9 @@ impl Tx {
 
         // println!("\nLocktime bytes: {:?}", locktime_bytes);
         // println!("Locktime: {}", locktime);
-        Ok(Tx::new(_version, segwit, _tx_ins, _tx_outs, witness, locktime, true))
+        Ok(Tx::new(
+            _version, segwit, _tx_ins, _tx_outs, witness, locktime, true,
+        ))
     }
 
     pub fn serialize(&self) -> Result<Vec<u8>, BTCErr> {
@@ -144,7 +149,7 @@ impl Tx {
         if self.segwit {
             result.extend(&[0, 1]);
         }
-        
+
         result.extend(script_encode_variant(self.tx_ins.len() as u64));
         for tx_in in &self.tx_ins {
             result.extend(tx_in.serialize()?);
@@ -175,13 +180,25 @@ impl Tx {
         Ok(result)
     }
 
-    pub fn fee(&self, tx_id: String, testnet: bool) -> Result<u64, BTCErr> {
+    pub fn fetch_fee(&self, tx_id: String, testnet: bool) -> Result<u64, BTCErr> {
         let url = format!("{}/tx/{}", get_url(testnet), tx_id);
 
         let client = Client::new();
         let response: Transaction = client.get(url).send()?.json()?;
         // println!("{:?}", response);
         Ok(response.fee)
+    }
+
+    pub fn fee(&self, testnet: bool) -> Result<u64, BTCErr> {
+        let mut i_sum = 0;
+        let mut o_sum = 0;
+        for tx_in in &self.tx_ins {
+            i_sum += tx_in.value(testnet)?;
+        }
+        for tx_out in &self.tx_outs {
+            o_sum += tx_out.satoshis.amount();
+        }
+        Ok(i_sum - o_sum)
     }
 }
 
