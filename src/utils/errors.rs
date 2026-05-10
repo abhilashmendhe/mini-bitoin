@@ -18,21 +18,27 @@ pub enum BTCErr {
     #[error("{}", .0)]
     PointNotOnSameECC(String),
 
-    #[error("{}",.0)]
+    #[error("{}", .0)]
     FromHexError(#[from] FromHexError),
 
-    #[error("{}",.0)]
+    #[error("{}", .0)]
     IoErr(#[from] std::io::Error),
 
-    #[error("{}",.0)]
+    #[error("{}", .0)]
     SliceErrorFromBytes(#[from] TryFromSliceError),
 
     #[error("{}", .0)]
     ScriptParseFailed(String),
 
-    #[error("{}",.0)]
+    #[error("{}", .0)]
     ScriptSerializeFailed(String),
 
     #[error("{}", .0)]
     FromReqwestError(#[from] reqwest::Error),
+
+    #[error("{}", .0)]
+    DiffTxIds(String),
+
+    #[error("{}", .0)]
+    TxNotFound(String),
 }
