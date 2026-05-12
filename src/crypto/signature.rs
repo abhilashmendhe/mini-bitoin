@@ -68,25 +68,39 @@ impl Signature {
     }
 
     pub fn un_der(bytes: Vec<u8>) -> (BigInt, BigInt) {
-        let _marker = bytes[0];
-        let _tootal_sig_len = bytes[1];
-        let _marker_r_val = bytes[2];
+        assert!(bytes.len() >= 8);
 
-        let r_val_len = bytes[3];
-        let r_val_start_ind = 4 as usize;
-        let r_val_end_ind = r_val_start_ind + r_val_len as usize + 1;
-        let r_val_bytes = &bytes[r_val_start_ind..r_val_end_ind];
+        assert_eq!(bytes[0], 0x30);
 
-        let _marker_s_val = r_val_end_ind;
-        let s_val_len = bytes[_marker_s_val + 1];
-        let s_val_start_ind = _marker_s_val + 2;
-        let s_val_end_ind = s_val_start_ind + s_val_len as usize;
-        let s_val_bytes = &bytes[s_val_start_ind..s_val_end_ind];
+        let _total_len = bytes[1];
+
+        // R
+        assert_eq!(bytes[2], 0x02);
+
+        let r_len = bytes[3] as usize;
+        let r_start = 4;
+        let r_end = r_start + r_len;
+
+        let r_bytes = &bytes[r_start..r_end];
+
+        // S
+        assert_eq!(bytes[r_end], 0x02);
+
+        let s_len = bytes[r_end + 1] as usize;
+        let s_start = r_end + 2;
+        let s_end = s_start + s_len;
+
+        let s_bytes = &bytes[s_start..s_end];
 
         (
-            BigInt::from_bytes_be(num_bigint::Sign::Plus, r_val_bytes),
-            BigInt::from_bytes_be(num_bigint::Sign::Plus, s_val_bytes),
+            BigInt::from_bytes_be(num_bigint::Sign::Plus, r_bytes),
+            BigInt::from_bytes_be(num_bigint::Sign::Plus, s_bytes),
         )
+    }
+
+    pub fn parse(bytes: Vec<u8>) -> Signature {
+        let (r, s) = Signature::un_der(bytes);
+        Signature { r, s }
     }
 }
 
