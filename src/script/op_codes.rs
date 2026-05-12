@@ -1,9 +1,16 @@
+use std::collections::VecDeque;
+
+use num_bigint::BigInt;
+
 use crate::script::{
     helper::encode_num,
-    op_codes_helper::{op_dup, op_hash160, op_hash256},
+    op_codes_helper::{
+        op_checksig, op_dup, op_fromaltstack, op_hash160, op_hash256, op_toaltstack,
+    },
 };
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Clone)]
 pub enum OP_CODES {
     UNSET = -1,
     OP_0 = 0,
@@ -99,31 +106,91 @@ pub enum OP_CODES {
 }
 
 impl OP_CODES {
-    pub fn push_to_stack(op_code: OP_CODES, stack: &mut Vec<Vec<u8>>) {
+    pub fn stack_operations(
+        op_code: OP_CODES,
+        stack: &mut VecDeque<Vec<u8>>,
+        altstack: &mut VecDeque<Vec<u8>>,
+        z: Option<BigInt>,
+    ) -> bool {
         // 1.to_le_bytes();
+        println!("op_code: {:?}", op_code.clone());
         match op_code {
-            OP_CODES::UNSET => todo!(),
-            OP_CODES::OP_0 => stack.push(encode_num(0)),
+            OP_CODES::UNSET => false,
+            OP_CODES::OP_0 => {
+                stack.push_back(encode_num(0));
+                true
+            }
             OP_CODES::OP_PUSHDATA1 => todo!(),
             OP_CODES::OP_PUSHDATA2 => todo!(),
             OP_CODES::OP_PUSHDATA4 => todo!(),
-            OP_CODES::OP_1NEGATE => todo!(),
-            OP_CODES::OP_1 => stack.push(encode_num(1)),
-            OP_CODES::OP_2 => stack.push(encode_num(2)),
-            OP_CODES::OP_3 => stack.push(encode_num(3)),
-            OP_CODES::OP_4 => stack.push(encode_num(4)),
-            OP_CODES::OP_5 => stack.push(encode_num(5)),
-            OP_CODES::OP_6 => stack.push(encode_num(6)),
-            OP_CODES::OP_7 => stack.push(encode_num(7)),
-            OP_CODES::OP_8 => stack.push(encode_num(8)),
-            OP_CODES::OP_9 => stack.push(encode_num(9)),
-            OP_CODES::OP_10 => stack.push(encode_num(10)),
-            OP_CODES::OP_11 => stack.push(encode_num(11)),
-            OP_CODES::OP_12 => stack.push(encode_num(12)),
-            OP_CODES::OP_13 => stack.push(encode_num(13)),
-            OP_CODES::OP_14 => stack.push(encode_num(14)),
-            OP_CODES::OP_15 => stack.push(encode_num(15)),
-            OP_CODES::OP_16 => stack.push(encode_num(16)),
+            OP_CODES::OP_1NEGATE => {
+                stack.push_back(encode_num(-1));
+                true
+            }
+            OP_CODES::OP_1 => {
+                stack.push_back(encode_num(1));
+                true
+            }
+            OP_CODES::OP_2 => {
+                stack.push_back(encode_num(2));
+                true
+            }
+            OP_CODES::OP_3 => {
+                stack.push_back(encode_num(3));
+                true
+            }
+            OP_CODES::OP_4 => {
+                stack.push_back(encode_num(4));
+                true
+            }
+            OP_CODES::OP_5 => {
+                stack.push_back(encode_num(5));
+                true
+            }
+            OP_CODES::OP_6 => {
+                stack.push_back(encode_num(6));
+                true
+            }
+            OP_CODES::OP_7 => {
+                stack.push_back(encode_num(7));
+                true
+            }
+            OP_CODES::OP_8 => {
+                stack.push_back(encode_num(8));
+                true
+            }
+            OP_CODES::OP_9 => {
+                stack.push_back(encode_num(9));
+                true
+            }
+            OP_CODES::OP_10 => {
+                stack.push_back(encode_num(10));
+                true
+            }
+            OP_CODES::OP_11 => {
+                stack.push_back(encode_num(11));
+                true
+            }
+            OP_CODES::OP_12 => {
+                stack.push_back(encode_num(12));
+                true
+            }
+            OP_CODES::OP_13 => {
+                stack.push_back(encode_num(13));
+                true
+            }
+            OP_CODES::OP_14 => {
+                stack.push_back(encode_num(14));
+                true
+            }
+            OP_CODES::OP_15 => {
+                stack.push_back(encode_num(15));
+                true
+            }
+            OP_CODES::OP_16 => {
+                stack.push_back(encode_num(16));
+                true
+            }
             OP_CODES::OP_NOP => todo!(),
             OP_CODES::OP_IF => todo!(),
             OP_CODES::OP_NOTIF => todo!(),
@@ -131,8 +198,8 @@ impl OP_CODES {
             OP_CODES::OP_ENDIF => todo!(),
             OP_CODES::OP_VERIFY => todo!(),
             OP_CODES::OP_RETURN => todo!(),
-            OP_CODES::OP_TOALTSTACK => todo!(),
-            OP_CODES::OP_FROMALTSTACK => todo!(),
+            OP_CODES::OP_TOALTSTACK => op_toaltstack(stack, altstack),
+            OP_CODES::OP_FROMALTSTACK => op_fromaltstack(stack, altstack),
             OP_CODES::OP_2DROP => todo!(),
             OP_CODES::OP_2DUP => todo!(),
             OP_CODES::OP_3DUP => todo!(),
@@ -142,9 +209,7 @@ impl OP_CODES {
             OP_CODES::OP_IFDUP => todo!(),
             OP_CODES::OP_DEPTH => todo!(),
             OP_CODES::OP_DROP => todo!(),
-            OP_CODES::OP_DUP => {
-                op_dup(stack);
-            }
+            OP_CODES::OP_DUP => op_dup(stack),
             OP_CODES::OP_NIP => todo!(),
             OP_CODES::OP_OVER => todo!(),
             OP_CODES::OP_PICK => todo!(),
@@ -178,14 +243,16 @@ impl OP_CODES {
             OP_CODES::OP_RIPEMD160 => todo!(),
             OP_CODES::OP_SHA1 => todo!(),
             OP_CODES::OP_SHA256 => todo!(),
-            OP_CODES::OP_HASH160 => {
-                op_hash160(stack);
-            },
-            OP_CODES::OP_HASH256 => {
-                op_hash256(stack);
-            }
+            OP_CODES::OP_HASH160 => op_hash160(stack),
+            OP_CODES::OP_HASH256 => op_hash256(stack),
             OP_CODES::OP_CODESEPARATOR => todo!(),
-            OP_CODES::OP_CHECKSIG => todo!(),
+            OP_CODES::OP_CHECKSIG => {
+                if let Some(z) = z {
+                    op_checksig(stack, z)
+                } else {
+                    false
+                }
+            }
             OP_CODES::OP_CHECKSIGVERIFY => todo!(),
             OP_CODES::OP_CHECKMULTISIG => todo!(),
             OP_CODES::OP_CHECKMULTISIGVERIFY => todo!(),
@@ -199,6 +266,104 @@ impl OP_CODES {
             OP_CODES::OP_NOP8 => todo!(),
             OP_CODES::OP_NOP9 => todo!(),
             OP_CODES::OP_NOP10 => todo!(),
+        }
+    }
+}
+
+impl From<u16> for OP_CODES {
+    fn from(value: u16) -> Self {
+        match value {
+            0 => OP_CODES::OP_0,
+            76 => OP_CODES::OP_PUSHDATA1,
+            77 => OP_CODES::OP_PUSHDATA2,
+            78 => OP_CODES::OP_PUSHDATA4,
+            79 => OP_CODES::OP_1NEGATE,
+            81 => OP_CODES::OP_1,
+            82 => OP_CODES::OP_2,
+            83 => OP_CODES::OP_3,
+            84 => OP_CODES::OP_4,
+            85 => OP_CODES::OP_5,
+            86 => OP_CODES::OP_6,
+            87 => OP_CODES::OP_7,
+            88 => OP_CODES::OP_8,
+            89 => OP_CODES::OP_9,
+            90 => OP_CODES::OP_10,
+            91 => OP_CODES::OP_11,
+            92 => OP_CODES::OP_12,
+            93 => OP_CODES::OP_13,
+            94 => OP_CODES::OP_14,
+            95 => OP_CODES::OP_15,
+            96 => OP_CODES::OP_16,
+            97 => OP_CODES::OP_NOP,
+            99 => OP_CODES::OP_IF,
+            100 => OP_CODES::OP_NOTIF,
+            103 => OP_CODES::OP_ELSE,
+            104 => OP_CODES::OP_ENDIF,
+            105 => OP_CODES::OP_VERIFY,
+            106 => OP_CODES::OP_RETURN,
+            107 => OP_CODES::OP_TOALTSTACK,
+            108 => OP_CODES::OP_FROMALTSTACK,
+            109 => OP_CODES::OP_2DROP,
+            110 => OP_CODES::OP_2DUP,
+            111 => OP_CODES::OP_3DUP,
+            112 => OP_CODES::OP_2OVER,
+            113 => OP_CODES::OP_2ROT,
+            114 => OP_CODES::OP_2SWAP,
+            115 => OP_CODES::OP_IFDUP,
+            116 => OP_CODES::OP_DEPTH,
+            117 => OP_CODES::OP_DROP,
+            118 => OP_CODES::OP_DUP,
+            119 => OP_CODES::OP_NIP,
+            120 => OP_CODES::OP_OVER,
+            121 => OP_CODES::OP_PICK,
+            122 => OP_CODES::OP_ROLL,
+            123 => OP_CODES::OP_ROT,
+            124 => OP_CODES::OP_SWAP,
+            125 => OP_CODES::OP_TUCK,
+            130 => OP_CODES::OP_SIZE,
+            135 => OP_CODES::OP_EQUAL,
+            136 => OP_CODES::OP_EQUALVERIFY,
+            139 => OP_CODES::OP_1ADD,
+            140 => OP_CODES::OP_1SUB,
+            143 => OP_CODES::OP_NEGATE,
+            144 => OP_CODES::OP_ABS,
+            145 => OP_CODES::OP_NOT,
+            146 => OP_CODES::OP_0NOTEQUAL,
+            147 => OP_CODES::OP_ADD,
+            148 => OP_CODES::OP_SUB,
+            154 => OP_CODES::OP_BOOLAND,
+            155 => OP_CODES::OP_BOOLOR,
+            156 => OP_CODES::OP_NUMEQUAL,
+            157 => OP_CODES::OP_NUMEQUALVERIFY,
+            158 => OP_CODES::OP_NUMNOTEQUAL,
+            159 => OP_CODES::OP_LESSTHAN,
+            160 => OP_CODES::OP_GREATERTHAN,
+            161 => OP_CODES::OP_LESSTHANOREQUAL,
+            162 => OP_CODES::OP_GREATERTHANOREQUAL,
+            163 => OP_CODES::OP_MIN,
+            164 => OP_CODES::OP_MAX,
+            165 => OP_CODES::OP_WITHIN,
+            166 => OP_CODES::OP_RIPEMD160,
+            167 => OP_CODES::OP_SHA1,
+            168 => OP_CODES::OP_SHA256,
+            169 => OP_CODES::OP_HASH160,
+            170 => OP_CODES::OP_HASH256,
+            171 => OP_CODES::OP_CODESEPARATOR,
+            172 => OP_CODES::OP_CHECKSIG,
+            173 => OP_CODES::OP_CHECKSIGVERIFY,
+            174 => OP_CODES::OP_CHECKMULTISIG,
+            175 => OP_CODES::OP_CHECKMULTISIGVERIFY,
+            176 => OP_CODES::OP_NOP1,
+            177 => OP_CODES::OP_CHECKLOCKTIMEVERIFY,
+            178 => OP_CODES::OP_CHECKSEQUENCEVERIFY,
+            179 => OP_CODES::OP_NOP4,
+            180 => OP_CODES::OP_NOP5,
+            181 => OP_CODES::OP_NOP6,
+            182 => OP_CODES::OP_NOP7,
+            183 => OP_CODES::OP_NOP8,
+            184 => OP_CODES::OP_NOP9,
+            185 => OP_CODES::OP_NOP10,
+            _ => OP_CODES::UNSET,
         }
     }
 }
