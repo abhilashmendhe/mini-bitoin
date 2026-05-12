@@ -154,7 +154,6 @@ impl Script {
                 return false;
             }
         }
-        println!("final stack: {:?}", stack);
         true
     }
 }
