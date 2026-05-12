@@ -1,14 +1,18 @@
-use std::{ops::Add, vec};
+use std::{collections::VecDeque, ops::Add, vec};
 
-use crate::{transactions::helper::read_variant, utils::errors::BTCErr};
+use num_bigint::BigInt;
 
-#[derive(Debug)]
+use crate::{
+    script::op_codes::OP_CODES, transactions::helper::read_variant, utils::errors::BTCErr,
+};
+
+#[derive(Debug, Clone)]
 pub enum ScriptCmd {
     Op(u8),
     Data(Vec<u8>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Script {
     pub cmds: Vec<ScriptCmd>,
 }
@@ -117,6 +121,41 @@ impl Script {
         result.extend(&sub_res);
 
         Ok(result)
+    }
+
+    pub fn evaluate(&self, z: Option<BigInt>) -> bool {
+        let mut cmds = self.cmds.clone();
+        let mut stack = VecDeque::new();
+        let mut altstack = VecDeque::new();
+
+        while cmds.len() > 0 {
+            let cmd = &mut cmds.remove(0);
+            match cmd {
+                ScriptCmd::Op(code) => {
+                    let f = OP_CODES::stack_operations(
+                        (*code as u16).into(),
+                        &mut stack,
+                        &mut altstack,
+                        z.clone(),
+                    );
+                    if !f {
+                        eprintln!("Bad op: {}", *code);
+                        return false;
+                    }
+                }
+                ScriptCmd::Data(items) => stack.push_back(items.clone()),
+            }
+        }
+        if stack.len() == 0 {
+            return false;
+        }
+        if let Some(items) = stack.pop_front() {
+            if items == b"" {
+                return false;
+            }
+        }
+        println!("final stack: {:?}", stack);
+        true
     }
 }
 
