@@ -27,4 +27,7 @@ This project follows a build-to-understand philosophy:
 
 1. Start with math (finite fields, ECC)
     - Refer [Basic Number Theory - 1](https://www.hackerearth.com/practice/math/number-theory/basic-number-theory-1/tutorial/) to understand more about modular arithmetic theory. 
-2. (Will Update)
+2. Worked on Serialization
+3. Created transaction class. Implemented necessary methods
+4. Learned about Scripts
+5. Transaction creation and validation **(*ongoing*)**
