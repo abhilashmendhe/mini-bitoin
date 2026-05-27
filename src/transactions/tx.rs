@@ -22,6 +22,7 @@ pub struct Tx {
     pub witness: Vec<Vec<u8>>,  // Witness, that stores stack of vec u8
     pub locktime: u32,          // defines when this transaction starts being valid
     pub testnet: bool,          // On testnet, or mainnet
+    pub sighash_all: Option<u32>
 }
 
 impl Tx {
@@ -42,6 +43,7 @@ impl Tx {
             witness,
             locktime,
             testnet,
+            sighash_all: None
         }
     }
 
@@ -55,7 +57,7 @@ impl Tx {
         Ok(hex::encode(&self.hash()?))
     }
 
-    pub fn parse(stream: String) -> Result<Tx, BTCErr> {
+    pub fn parse(stream: String, testnet: bool) -> Result<Tx, BTCErr> {
         let bytes = hex::decode(stream)?;
         // println!("Whole bytes size: {}", bytes.len());
         // println!("Whole bytes: {:?}\n", bytes);
@@ -138,7 +140,7 @@ impl Tx {
         // println!("\nLocktime bytes: {:?}", locktime_bytes);
         // println!("Locktime: {}", locktime);
         Ok(Tx::new(
-            _version, segwit, _tx_ins, _tx_outs, witness, locktime, true,
+            _version, segwit, _tx_ins, _tx_outs, witness, locktime, testnet,
         ))
     }
 
@@ -177,6 +179,10 @@ impl Tx {
         }
 
         result.extend(self.locktime.to_le_bytes());
+
+        if let Some(sighash_all) = self.sighash_all {
+            result.extend(sighash_all.to_le_bytes());
+        }
         Ok(result)
     }
 
@@ -200,6 +206,21 @@ impl Tx {
         }
         Ok(i_sum - o_sum)
     }
+
+    pub fn set_sighash_all(&mut self) {
+        self.sighash_all = Some(1);
+    }
+    pub fn sig_hash(&mut self) -> Result<(), BTCErr> {
+        let tx_ins = &mut self.tx_ins;
+        for tx_in in tx_ins {
+            // dbg!(tx_in);
+            let script_pubkey = tx_in.script_pubkey(self.testnet)?;
+            tx_in.script_sig = script_pubkey;
+        }
+        self.set_sighash_all();
+        Ok(())
+    }
+
 }
 
 // #[derive(Debug, Deserialize)]
