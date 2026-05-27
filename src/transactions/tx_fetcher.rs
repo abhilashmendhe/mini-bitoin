@@ -39,9 +39,15 @@ impl TxFetcher {
     pub fn fetch(&mut self, tx_id: String, testnet: bool, fresh: bool) -> Result<Tx, BTCErr> {
         if fresh || !self.cache.contains_key(&tx_id) {
             let url = format!("{}/tx/{}/hex", get_url(testnet), tx_id);
-            let response = reqwest::blocking::get(url).unwrap().text().unwrap();
+            // let response = reqwest::blocking::get(url).unwrap().text().unwrap();
+            let response = reqwest::blocking::get(&url)?;
+            // println!("{:?}", response);
+            if response.status() == 404 {
+                return Err(BTCErr::BlockNotFound(format!("Block not found for url: {}", url)));
+            }
+            let response_text = response.text()?;
 
-            let tx = Tx::parse(response)?;
+            let tx = Tx::parse(response_text, testnet)?;
             // println!("{}", tx_id);
             // println!("{}", tx.id()?);
 
