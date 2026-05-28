@@ -44,4 +44,7 @@ pub enum BTCErr {
 
     #[error("{}", .0)]
     BlockNotFound(String),
+
+    #[error("{}", .0)]
+    TxInNotFound(String),
 }
