@@ -1,3 +1,5 @@
+use crate::{script::script::Script, utils::errors::BTCErr};
+
 pub fn encode_num(num: i64) -> Vec<u8> {
     if num == 0 {
         return vec![];
@@ -41,4 +43,18 @@ pub fn decode_num(mut element: Vec<u8>) -> i64 {
         result += *c as i64;
     }
     if neg { -result } else { result }
+}
+
+pub fn p2kh_script(h160: Vec<u8>) -> Result<Script, BTCErr> {
+    let mut pb = vec![0x76, 0xa9];
+    // pb.extend(&h160);
+    pb.push(h160.len() as u8);
+    pb.extend(&h160);
+    pb.extend([0x88, 0xac]);
+    let mut new_pb = vec![];
+    new_pb.push(pb.len() as u8);
+    new_pb.extend(&pb);
+    let script_cmd = Script::parse(new_pb)?;
+    // println!("{:?}",script_cmd);
+    Ok(Script::new(Some(script_cmd)))
 }

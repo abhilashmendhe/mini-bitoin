@@ -24,6 +24,7 @@ impl Script {
     }
 
     pub fn parse(script_pub_key: Vec<u8>) -> Result<Vec<ScriptCmd>, BTCErr> {
+        // println!("{:?}",script_pub_key);
         // let mut cmds: Vec<dyn ScriptCmds>;
         let mut cmds = vec![];
         let pos = 0;
