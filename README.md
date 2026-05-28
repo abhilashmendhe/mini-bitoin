@@ -30,4 +30,4 @@ This project follows a build-to-understand philosophy:
 2. Worked on Serialization
 3. Created transaction class. Implemented necessary methods
 4. Learned about Scripts
-5. Transaction creation and validation **(*ongoing*)**
+5. Transaction creation and validation
