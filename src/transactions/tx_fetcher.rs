@@ -43,7 +43,10 @@ impl TxFetcher {
             let response = reqwest::blocking::get(&url)?;
             // println!("{:?}", response);
             if response.status() == 404 {
-                return Err(BTCErr::BlockNotFound(format!("Block not found for url: {}", url)));
+                return Err(BTCErr::BlockNotFound(format!(
+                    "Block not found for url: {}",
+                    url
+                )));
             }
             let response_text = response.text()?;
 
