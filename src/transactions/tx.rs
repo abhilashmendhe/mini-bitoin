@@ -8,11 +8,15 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 
 use crate::{
-    crypto::hash_helper::hash256,
-    script::script::script_encode_variant,
+    crypto::{hash_helper::hash256, private_key::PrivateKey},
+    script::script::{Script, ScriptCmd, script_encode_variant},
     transactions::{helper::read_variant, tx_fetcher::get_url, tx_in::TxIn, tx_out::TxOut},
     utils::errors::BTCErr,
 };
+
+pub const SIGHASH_ALL: u8 = 1;
+pub const SIGHASH_NONE: u8 = 2;
+pub const SIGHASH_SINGLE: u8 = 3;
 
 #[derive(Debug, Clone)]
 pub struct Tx {
@@ -217,7 +221,7 @@ impl Tx {
             if let Some(tx_in) = self.tx_ins.get_mut(input_index) {
                 let script_pubkey = tx_in.script_pubkey(self.testnet)?;
                 tx_in.script_sig = script_pubkey;
-                self.set_sighash_all();
+                // self.set_sighash_all();
             } else {
                 return Err(BTCErr::TxInNotFound(format!(
                     "TxIn for index:{} not found!",
@@ -265,6 +269,19 @@ impl Tx {
         Ok(true)
     }
 
+    pub fn sign_input(&mut self, input_index: usize, private_key: PrivateKey) -> Result<bool, BTCErr> {
+        let z_str = self.sig_hash(Some(input_index))?;
+        let z = BigInt::parse_bytes(z_str.as_bytes(), 16).unwrap();
+        let mut der = private_key.sign(z).der();
+        der.extend(SIGHASH_ALL.to_be_bytes());
+        let sig = der;
+        let sec = private_key.point.sec(false);
+        let script_sig = Script::new(Some(vec![ScriptCmd::Data(sig), ScriptCmd::Data(sec)]));
+        if let Some(tx_in) = self.tx_ins.get_mut(0) {
+            tx_in.script_sig = script_sig;
+        }
+        self.verify_input(input_index)
+    }
     // pub fn verify_fast(&mut self) -> Result<bool, BTCErr> {
     //     if self.fee(self.testnet)? < 0 as u64 {
     //         return Ok(false);
