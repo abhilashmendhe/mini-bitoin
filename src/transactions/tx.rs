@@ -3,6 +3,7 @@ use std::{
     io::{Cursor, Read},
 };
 
+use num_bigint::BigInt;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 
@@ -22,7 +23,7 @@ pub struct Tx {
     pub witness: Vec<Vec<u8>>,  // Witness, that stores stack of vec u8
     pub locktime: u32,          // defines when this transaction starts being valid
     pub testnet: bool,          // On testnet, or mainnet
-    pub sighash_all: Option<u32>
+    pub sighash_all: Option<u32>,
 }
 
 impl Tx {
@@ -43,7 +44,7 @@ impl Tx {
             witness,
             locktime,
             testnet,
-            sighash_all: None
+            sighash_all: None,
         }
     }
 
@@ -210,17 +211,88 @@ impl Tx {
     pub fn set_sighash_all(&mut self) {
         self.sighash_all = Some(1);
     }
-    pub fn sig_hash(&mut self) -> Result<(), BTCErr> {
-        let tx_ins = &mut self.tx_ins;
-        for tx_in in tx_ins {
-            // dbg!(tx_in);
-            let script_pubkey = tx_in.script_pubkey(self.testnet)?;
-            tx_in.script_sig = script_pubkey;
+
+    pub fn sig_hash(&mut self, input_ind: Option<usize>) -> Result<String, BTCErr> {
+        if let Some(input_index) = input_ind {
+            if let Some(tx_in) = self.tx_ins.get_mut(input_index) {
+                let script_pubkey = tx_in.script_pubkey(self.testnet)?;
+                tx_in.script_sig = script_pubkey;
+                self.set_sighash_all();
+            } else {
+                return Err(BTCErr::TxInNotFound(format!(
+                    "TxIn for index:{} not found!",
+                    input_index
+                )));
+            }
+        } else {
+            let tx_ins = &mut self.tx_ins;
+            for tx_in in tx_ins {
+                // dbg!(tx_in);
+                let script_pubkey = tx_in.script_pubkey(self.testnet)?;
+                tx_in.script_sig = script_pubkey;
+            }
+            self.set_sighash_all();
         }
-        self.set_sighash_all();
-        Ok(())
+        let tx_ser = self.serialize()?;
+        let h256 = hash256(&tx_ser);
+        let z = hex::encode(h256);
+        Ok(z)
     }
 
+    pub fn verify_input(&mut self, input_ind: usize) -> Result<bool, BTCErr> {
+        if let Some(tx_in) = self.tx_ins.get(input_ind) {
+            let script_pubkey = tx_in.script_pubkey(self.testnet)?;
+            let script_sig = tx_in.script_sig.clone();
+            let z = self.sig_hash(Some(input_ind))?;
+            let z_bigint = BigInt::parse_bytes(z.as_bytes(), 16).unwrap();
+            let combined = script_sig + script_pubkey;
+            return Ok(combined.evaluate(Some(z_bigint)));
+        }
+        Ok(false)
+    }
+
+    pub fn verify(&mut self) -> Result<bool, BTCErr> {
+        if self.fee(self.testnet)? < 0 as u64 {
+            return Ok(false);
+        }
+
+        for i in 0..self.tx_ins.len() {
+            let v_res = self.verify_input(i)?;
+            if !v_res {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
+    // pub fn verify_fast(&mut self) -> Result<bool, BTCErr> {
+    //     if self.fee(self.testnet)? < 0 as u64 {
+    //         return Ok(false);
+    //     }
+    //     let tx_ins = &mut self.tx_ins;
+    //     for tx_in in tx_ins {
+    //         // dbg!(tx_in);
+    //         let script_pubkey = tx_in.script_pubkey(self.testnet)?;
+    //         tx_in.script_sig = script_pubkey;
+    //     }
+    //     self.set_sighash_all();
+    //     let tx_ins = &self.tx_ins;
+    //     for tx_in in tx_ins {
+    //         // dbg!(tx_in);
+    //         let script_pubkey = tx_in.script_pubkey(self.testnet)?;
+    //         let script_sig = tx_in.script_sig.clone();
+
+    //         let tx_ser = self.serialize()?;
+    //         let h256 = hash256(&tx_ser);
+    //         let z = hex::encode(h256);
+    //         let z_bigint = BigInt::parse_bytes(z.as_bytes(), 16).unwrap();
+    //         let combined = script_sig + script_pubkey;
+    //         if !combined.evaluate(Some(z_bigint)) {
+    //             return Ok(false);
+    //         }
+    //     }
+    //     Ok(true)
+    // }
 }
 
 // #[derive(Debug, Deserialize)]
