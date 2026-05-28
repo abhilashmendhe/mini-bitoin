@@ -5,7 +5,7 @@ use num_bigint::BigInt;
 use crate::script::{
     helper::encode_num,
     op_codes_helper::{
-        op_checksig, op_dup, op_fromaltstack, op_hash160, op_hash256, op_toaltstack,
+        op_checksig, op_dup, op_equalverify, op_fromaltstack, op_hash160, op_hash256, op_toaltstack,
     },
 };
 
@@ -113,7 +113,7 @@ impl OP_CODES {
         z: Option<BigInt>,
     ) -> bool {
         // 1.to_le_bytes();
-        println!("op_code: {:?}", op_code.clone());
+        // println!("op_code: {:?}", op_code.clone());
         match op_code {
             OP_CODES::UNSET => false,
             OP_CODES::OP_0 => {
@@ -219,7 +219,7 @@ impl OP_CODES {
             OP_CODES::OP_TUCK => todo!(),
             OP_CODES::OP_SIZE => todo!(),
             OP_CODES::OP_EQUAL => todo!(),
-            OP_CODES::OP_EQUALVERIFY => todo!(),
+            OP_CODES::OP_EQUALVERIFY => op_equalverify(stack),
             OP_CODES::OP_1ADD => todo!(),
             OP_CODES::OP_1SUB => todo!(),
             OP_CODES::OP_NEGATE => todo!(),

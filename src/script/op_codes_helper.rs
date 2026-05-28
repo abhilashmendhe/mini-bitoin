@@ -354,4 +354,3 @@ pub fn op_greaterthan(stack: &mut VecDeque<Vec<u8>>) -> bool {
     }
     true
 }
-
