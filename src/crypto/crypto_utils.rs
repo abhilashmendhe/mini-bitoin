@@ -1,8 +1,14 @@
-use crate::crypto::hash_helper::hash256;
+use crate::{crypto::hash_helper::hash256, utils::errors::BTCErr};
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
+use once_cell::sync::Lazy;
 
 // use crate::crypto::hash_helper::single_hash;
+pub const BASE58_ALPHA: Lazy<Vec<char>> = Lazy::new(|| {
+    "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+        .chars()
+        .collect::<Vec<_>>()
+});
 
 pub fn to_32bytes_vec_big_endian(data: &BigInt) -> Vec<u8> {
     let (_, data_bytes) = data.to_bytes_be();
@@ -29,10 +35,7 @@ pub fn little_endian_to_int(bytes: &[u8]) -> BigInt {
 }
 
 pub fn encode_base58(data: &[u8]) -> String {
-    let base58_alpha = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-        .chars()
-        .collect::<Vec<_>>();
-
+    let base58_alpha = BASE58_ALPHA;
     let leading_zeros = data.iter().take_while(|&&b| b == 0).count();
     let prefix = "1".repeat(leading_zeros);
     // let prefix = "".to_string();
@@ -59,4 +62,38 @@ pub fn encode_base58_checksum(b: &[u8]) -> String {
     combined.extend_from_slice(checksum);
 
     encode_base58(&combined)
+}
+
+pub fn decode_base58(s: &str) -> Result<Vec<u8>, BTCErr> {
+    let base58_alpha = BASE58_ALPHA;
+    let mut base58_vec = vec![];
+    let leading_ones = s.chars().into_iter().take_while(|b| *b == '1').count();
+    let mut total_sum = 0;
+    for c in s.chars() {
+        total_sum *= 58;
+        let ind_value = base58_alpha.iter().position(|ch| *ch == c);
+        // println!("{v:?}");
+        match ind_value {
+            Some(iv) => {
+                total_sum += iv;
+            }
+            None => {
+                return Err(BTCErr::Baes58DecodeFailed(format!(
+                    "Invalid base58 : {}",
+                    s
+                )));
+            }
+        }
+    }
+    // println!("{}",total_sum);
+    while total_sum > 0 {
+        let rem = total_sum % 256;
+        total_sum /= 256;
+        // print!("{} ", rem);
+        base58_vec.push(rem as u8);
+    }
+    let leading_zeroes = vec![0; leading_ones];
+    base58_vec.extend(&leading_zeroes);
+    base58_vec.reverse();
+    Ok(base58_vec)
 }
