@@ -71,4 +71,16 @@ impl Block {
         hash_block_bytes.reverse();
         hex::encode(hash_block_bytes)
     } 
+
+    pub fn bip9(&self) -> bool {
+        self.version >> 29 == 0b001
+    }
+
+    pub fn bip91(&self) -> bool {
+        self.version >> 4 & 1 == 1
+    }
+
+    pub fn bip141(&self) -> bool {
+        self.version >> 1 & 1 == 1
+    }
 }
