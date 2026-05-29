@@ -8,7 +8,7 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 
 use crate::{
-    crypto::{hash_helper::hash256, private_key::PrivateKey},
+    crypto::{crypto_utils::little_endian_to_int, hash_helper::hash256, private_key::PrivateKey},
     script::script::{Script, ScriptCmd, script_encode_variant},
     transactions::{helper::read_variant, tx_fetcher::get_url, tx_in::TxIn, tx_out::TxOut},
     utils::errors::BTCErr,
@@ -269,7 +269,11 @@ impl Tx {
         Ok(true)
     }
 
-    pub fn sign_input(&mut self, input_index: usize, private_key: PrivateKey) -> Result<bool, BTCErr> {
+    pub fn sign_input(
+        &mut self,
+        input_index: usize,
+        private_key: PrivateKey,
+    ) -> Result<bool, BTCErr> {
         let z_str = self.sig_hash(Some(input_index))?;
         let z = BigInt::parse_bytes(z_str.as_bytes(), 16).unwrap();
         let mut der = private_key.sign(z).der();
@@ -281,6 +285,32 @@ impl Tx {
             tx_in.script_sig = script_sig;
         }
         self.verify_input(input_index)
+    }
+
+    pub fn is_coinbase(&mut self) -> Result<bool, BTCErr> {
+        if self.tx_ins.len() != 1 {
+            return Ok(false);
+        }
+        if let Some(first_tx_in) = self.tx_ins.get(0) {
+            if first_tx_in.prev_tx == vec![0; 32] {
+                if first_tx_in.prev_ind == 0xffffffff {
+                    return Ok(true);
+                }
+            }
+        }
+        Ok(false)
+    }
+
+    pub fn coinbase_height(&mut self) -> Result<Option<BigInt>, BTCErr> {
+        if !self.is_coinbase()? {
+            return Ok(None);
+        }
+        if let Some(tx_in) = self.tx_ins.get(0) {
+            if let ScriptCmd::Data(items) = tx_in.script_sig.cmds[0].clone() {
+                return Ok(Some(little_endian_to_int(&items)));
+            }
+        }
+        Ok(None)
     }
     // pub fn verify_fast(&mut self) -> Result<bool, BTCErr> {
     //     if self.fee(self.testnet)? < 0 as u64 {
