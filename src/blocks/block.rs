@@ -1,22 +1,41 @@
-use crate::{crypto::hash_helper::hash256, utils::errors::BTCErr};
+use num_bigint::BigInt;
+
+use crate::{
+    blocks::block_helpers::bits_to_target,
+    crypto::{crypto_utils::little_endian_to_int, hash_helper::hash256},
+    utils::errors::BTCErr,
+};
 
 #[derive(Debug)]
 pub struct Block {
     pub version: u32,
     pub previous_block: Vec<u8>,
     pub merkle_root: Vec<u8>,
-    pub timestamp: u32, 
-    pub bits: Vec<u8>, 
-    pub nonce: Vec<u8>
+    pub timestamp: u32,
+    pub bits: Vec<u8>,
+    pub nonce: Vec<u8>,
 }
 
 impl Block {
-    pub fn new(version: u32, previous_block: Vec<u8>, merkle_root: Vec<u8>, timestamp: u32, bits: Vec<u8>, nonce: Vec<u8>) -> Self {
-        Self { version, previous_block, merkle_root, timestamp, bits, nonce }
+    pub fn new(
+        version: u32,
+        previous_block: Vec<u8>,
+        merkle_root: Vec<u8>,
+        timestamp: u32,
+        bits: Vec<u8>,
+        nonce: Vec<u8>,
+    ) -> Self {
+        Self {
+            version,
+            previous_block,
+            merkle_root,
+            timestamp,
+            bits,
+            nonce,
+        }
     }
 
     pub fn parse(block_bytes: Vec<u8>) -> Result<Self, BTCErr> {
-
         // 1. read version
         let version_bytes = &block_bytes[0..4];
         let version = u32::from_le_bytes(version_bytes.try_into()?);
@@ -39,7 +58,14 @@ impl Block {
         let nonce_bytes = block_bytes[76..80].to_vec();
         // let nonce = u32::from_be_bytes(nonce_bytes.try_into()?);
 
-        Ok(Self { version, previous_block, merkle_root, timestamp, bits: bits_bytes, nonce: nonce_bytes })
+        Ok(Self {
+            version,
+            previous_block,
+            merkle_root,
+            timestamp,
+            bits: bits_bytes,
+            nonce: nonce_bytes,
+        })
     }
 
     pub fn serialize(&self) -> Vec<u8> {
@@ -51,7 +77,7 @@ impl Block {
         // 2. prev block
         bytes.extend(&self.previous_block);
 
-        // 3. merkle root 
+        // 3. merkle root
         bytes.extend(&self.merkle_root);
 
         // 4. timestamp
@@ -70,7 +96,7 @@ impl Block {
         let mut hash_block_bytes = hash256(&self.serialize());
         hash_block_bytes.reverse();
         hex::encode(hash_block_bytes)
-    } 
+    }
 
     pub fn bip9(&self) -> bool {
         self.version >> 29 == 0b001
@@ -82,5 +108,20 @@ impl Block {
 
     pub fn bip141(&self) -> bool {
         self.version >> 1 & 1 == 1
+    }
+
+    pub fn target(&self) -> BigInt {
+        bits_to_target(&self.bits)
+    }
+
+    pub fn difficulty(&self) -> BigInt {
+        let target = self.target();
+        BigInt::from(0xffff) * BigInt::from(256).pow((0x1d - 3) as u32) / target
+    }
+
+    pub fn check_pow(&self) -> bool {
+        let sha = hash256(&self.serialize());
+        let proof = little_endian_to_int(&sha);
+        proof < self.target()
     }
 }
