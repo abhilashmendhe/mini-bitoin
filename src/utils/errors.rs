@@ -52,5 +52,5 @@ pub enum BTCErr {
     Baes58DecodeFailed(String),
 
     #[error("{}", .0)]
-    FailedToStipPrefix(String)
+    FailedToStipPrefix(String),
 }
