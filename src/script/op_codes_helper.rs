@@ -354,3 +354,52 @@ pub fn op_greaterthan(stack: &mut VecDeque<Vec<u8>>) -> bool {
     }
     true
 }
+
+pub fn op_checkmultisig(stack: &mut VecDeque<Vec<u8>>, z: Option<BigInt>) -> bool {
+
+    if stack.len() < 1 {
+        return false;
+    }
+    let n = decode_num(stack.pop_back().unwrap());
+    if stack.len() < (n as usize + 1) {
+        return false;
+    }
+    let mut sec_pubkeys = vec![];
+    for _ in 0..n {
+        sec_pubkeys.push(stack.pop_back().unwrap());
+    }
+
+    let m = decode_num(stack.pop_back().unwrap());
+    if stack.len() < (m as usize + 1) {
+        return false;
+    }
+
+    let mut der_signatures = vec![];
+    for _ in 0..m {
+        let der_sig = stack.pop_back().unwrap();
+        der_signatures.push(der_sig[..(der_sig.len()-1)].to_vec());
+    }
+
+    let mut points = vec![];
+    let mut sigs = vec![];
+    for sec in sec_pubkeys {
+        points.push(S256Point::parse(sec));
+    }
+    for der in der_signatures {
+        sigs.push(Signature::parse(der));
+    }
+
+    for sig in sigs {
+        if points.len() == 0 {
+            return false;
+        }
+        while let Some(point) = points.pop() {
+            let generator = (*G).clone();
+            if point.verify(z.clone().unwrap(), sig.clone(), generator) {
+                break;
+            }
+        }
+    }
+    stack.push_back(encode_num(1));
+    true
+}
