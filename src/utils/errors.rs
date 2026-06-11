@@ -53,4 +53,13 @@ pub enum BTCErr {
 
     #[error("{}", .0)]
     FailedToStipPrefix(String),
+
+    #[error("{}", .0)]
+    ConnReset(String),
+
+    #[error("{}", .0)]
+    IncorrectMagicNumber(String),
+
+    #[error("{}", .0)]
+    NetworkChecksumFailed(String)
 }
