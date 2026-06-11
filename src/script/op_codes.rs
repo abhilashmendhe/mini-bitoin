@@ -5,7 +5,8 @@ use num_bigint::BigInt;
 use crate::script::{
     helper::encode_num,
     op_codes_helper::{
-        op_checkmultisig, op_checksig, op_dup, op_equalverify, op_fromaltstack, op_hash160, op_hash256, op_toaltstack
+        op_checkmultisig, op_checksig, op_dup, op_equalverify, op_fromaltstack, op_hash160,
+        op_hash256, op_toaltstack,
     },
 };
 

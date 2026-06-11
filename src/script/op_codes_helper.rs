@@ -356,7 +356,6 @@ pub fn op_greaterthan(stack: &mut VecDeque<Vec<u8>>) -> bool {
 }
 
 pub fn op_checkmultisig(stack: &mut VecDeque<Vec<u8>>, z: Option<BigInt>) -> bool {
-
     if stack.len() < 1 {
         return false;
     }
@@ -377,7 +376,7 @@ pub fn op_checkmultisig(stack: &mut VecDeque<Vec<u8>>, z: Option<BigInt>) -> boo
     let mut der_signatures = vec![];
     for _ in 0..m {
         let der_sig = stack.pop_back().unwrap();
-        der_signatures.push(der_sig[..(der_sig.len()-1)].to_vec());
+        der_signatures.push(der_sig[..(der_sig.len() - 1)].to_vec());
     }
 
     let mut points = vec![];
