@@ -69,6 +69,16 @@ impl NetworkEnvelope {
             payload,
         })
     }
+
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut v = vec![];
+        v.extend(&self.network_magic);
+        v.extend(&self.command);
+        v.extend(&self.payload_length.to_le_bytes());
+        v.extend(&self.payload_checksum);
+        v.extend(&self.payload);
+        v
+    }
 }
 
 impl Display for NetworkEnvelope {
